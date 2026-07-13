@@ -1,3 +1,6 @@
+---
+render_with_liquid: false
+---
 # Share Transfer & Officeholder Change Precedent Pack (Australia)
 
 Word (.docx) templates coded for **docxtpl** (Jinja2). Styling matches the firm's
