@@ -398,6 +398,32 @@ function getTemplateBuffer() {
 }
 
 // ---- docxtpl-compatible rendering --------------------------------------
+// Word frequently splits what looks like one contiguous run of text into
+// several <w:r> runs — spell-check markers, revision tracking, or simply
+// re-saving after a formatting change (bolding part of a word, etc.). If a
+// split happens to fall INSIDE a {{ }} / {% %} tag, the tag's text is no
+// longer contiguous in the raw XML, and a naive template engine chokes on
+// the stray XML poking through the middle of it. docxtpl's Python library
+// defragments these before handing anything to Jinja; the two functions
+// below port that same logic so the browser-side renderer is exactly as
+// tolerant of hand-edited templates as the Python pipeline is.
+
+// docxtpl patch_xml, step 1: a delimiter itself split by a run boundary,
+// e.g. "{" <w:r>...</w:r> "{" — collapse back to a clean "{{"/"%}" etc.
+function defragmentSplitDelimiters(xml) {
+  return xml.replace(/(?<=\{)(<[^>]*>)+(?=[\{%#])|(?<=[%}#])(<[^>]*>)+(?=\})/gs, "");
+}
+
+// docxtpl patch_xml, step 2 ("striptags"): within a {%, {{ or {# span, up to
+// (not including) its closing delimiter, remove the "</w:t>...<w:t[ attrs]>"
+// boilerplate that appears at a run boundary — reconstructing the tag's
+// original contiguous text regardless of how many runs Word split it into.
+function stripRunSplitsInsideTags(xml) {
+  return xml.replace(/\{%(?:(?!%\})[\s\S])*|\{#(?:(?!#\})[\s\S])*|\{\{(?:(?!\}\})[\s\S])*/g, (m) =>
+    m.replace(/<\/w:t>[\s\S]*?(<w:t>|<w:t [^>]*>)/g, "")
+  );
+}
+
 // Word/docx-js XML-escapes quote characters even in plain text content
 // (an apostrophe becomes &apos;). That's valid XML, but breaks Jinja
 // expressions like {% if x == 'individual' %} unless unescaped back to
@@ -428,6 +454,8 @@ async function renderDocxTemplate(templateArrayBuffer, context) {
   );
   for (const name of xmlPartNames) {
     let xml = await zip.file(name).async("string");
+    xml = defragmentSplitDelimiters(xml);
+    xml = stripRunSplitsInsideTags(xml);
     xml = unescapeInsideTags(xml);
     xml = preprocessRowLoops(xml);
     xml = nunjucks.renderString(xml, context);
