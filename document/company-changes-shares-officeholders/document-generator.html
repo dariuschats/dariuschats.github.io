@@ -409,7 +409,7 @@ function getTemplateBuffer() {
 // tolerant of hand-edited templates as the Python pipeline is.
 
 // docxtpl patch_xml, step 1: a delimiter itself split by a run boundary,
-// e.g. "{" <w:r>...</w:r> "{" — collapse back to a clean "{{"/"%}" etc.
+// e.g. "{" <w:r>...</w:r> "{" — collapse back to a clean  etc.
 function defragmentSplitDelimiters(xml) {
   return xml.replace(/(?<=\{)(<[^>]*>)+(?=[\{%#])|(?<=[%}#])(<[^>]*>)+(?=\})/gs, "");
 }
