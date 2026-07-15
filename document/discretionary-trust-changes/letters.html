@@ -934,13 +934,13 @@ document.getElementById("generateBtn").addEventListener("click", generateAll);
 (async function checkTemplateSourceOnLoad() {
   const banner = document.getElementById("templateSourceBanner");
   try {
-    await getTemplateBuffer("VARIATION_Deed", TEMPLATE_FILES.VARIATION_Deed);
+    await getTemplateBuffer("VARIATION_Letter", TEMPLATE_FILES.VARIATION_Letter);
   } catch (err) {
     banner.className = "template-source-banner error";
     banner.textContent = "⚠ Couldn't load any template — check the page's console for details.";
     return;
   }
-  if (templateSourceUsed.VARIATION_Deed === "live") {
+  if (templateSourceUsed.VARIATION_Letter === "live") {
     banner.className = "template-source-banner live";
     banner.textContent = "✓ Using live template files from the templates/ folder next to this page.";
   } else {
