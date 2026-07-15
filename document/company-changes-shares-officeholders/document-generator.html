@@ -348,7 +348,7 @@ render_with_liquid: false
    Renders docxtpl-coded .docx templates entirely client-side
    using JSZip (to read/write the .docx archive) and nunjucks
    (a Jinja2-compatible template engine) to fill in the {{ }} /
-   % % tags. No server, no upload.
+   {% a %} tags. No server, no upload.
    ============================================================ */
 
 nunjucks.configure({ autoescape: true, trimBlocks: false });
@@ -401,7 +401,7 @@ function getTemplateBuffer() {
 // Word frequently splits what looks like one contiguous run of text into
 // several <w:r> runs — spell-check markers, revision tracking, or simply
 // re-saving after a formatting change (bolding part of a word, etc.). If a
-// split happens to fall INSIDE a {{ }} / {% %} tag, the tag's text is no
+// split happens to fall INSIDE a {{ }} / {% a %} tag, the tag's text is no
 // longer contiguous in the raw XML, and a naive template engine chokes on
 // the stray XML poking through the middle of it. docxtpl's Python library
 // defragments these before handing anything to Jinja; the two functions
@@ -427,7 +427,7 @@ function stripRunSplitsInsideTags(xml) {
 // Word/docx-js XML-escapes quote characters even in plain text content
 // (an apostrophe becomes &apos;). That's valid XML, but breaks Jinja
 // expressions like {% if x == 'individual' %} unless unescaped back to
-// literal characters *inside* the {{ }} / {% %} spans before parsing.
+// literal characters *inside* the {{ }} / {% a %} spans before parsing.
 function unescapeInsideTags(xml) {
   const unescapeEntities = (s) =>
     s
