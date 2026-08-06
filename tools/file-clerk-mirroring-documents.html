@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mirroring-documents</title>
+<style>
+:root{
+  --ink:#1E2A44;
+  --parchment:#F6F3EC;
+  --card:#FFFFFF;
+  --hairline:#DCD5C4;
+  --brass:#A9814A;
+  --brass-dark:#8A6934;
+  --slate:#586174;
+  --sage:#4C7A61;
+  --sage-bg:#EAF1EC;
+  --rust:#B5502F;
+  --rust-bg:#F8EAE4;
+  --navy-bg:#EEF0F5;
+  --serif: Cambria, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Consolas", "Menlo", monospace;
+}
+
+*{box-sizing:border-box;}
+
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--parchment);
+  color:var(--ink);
+  font-family:var(--sans);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(30,42,68,0.05) 1px, transparent 0);
+  background-size:22px 22px;
+}
+
+.page{
+  max-width:780px;
+  margin:0 auto;
+  padding:56px 24px 96px;
+}
+
+header{
+  margin-bottom:36px;
+}
+
+.eyebrow{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:0.18em;
+  color:var(--brass-dark);
+  margin:0 0 10px;
+  font-weight:600;
+}
+
+h1{
+  font-family:var(--serif);
+  font-size:38px;
+  line-height:1.08;
+  margin:0 0 12px;
+  font-weight:600;
+  letter-spacing:-0.01em;
+}
+
+.sub{
+  font-size:15px;
+  color:var(--slate);
+  line-height:1.55;
+  max-width:62ch;
+  margin:0;
+}
+
+h2.section-title{
+  font-family:var(--serif);
+  font-size:19px;
+  font-weight:600;
+  margin:34px 0 6px;
+}
+p.section-sub{
+  font-size:13px;
+  color:var(--slate);
+  margin:0 0 16px;
+  line-height:1.5;
+  max-width:64ch;
+}
+
+/* Dropzone */
+.dropzone{
+  border:1.5px dashed var(--brass);
+  border-radius:6px;
+  background:rgba(169,129,74,0.045);
+  padding:36px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:background 0.15s ease, border-color 0.15s ease;
+  position:relative;
+}
+.dropzone.drag-over{
+  background:rgba(169,129,74,0.13);
+  border-color:var(--brass-dark);
+}
+.dropzone svg{
+  width:34px;
+  height:34px;
+  color:var(--brass-dark);
+  margin-bottom:10px;
+}
+.dropzone p{
+  margin:0;
+  color:var(--slate);
+  font-size:14.5px;
+}
+.dropzone .browse{
+  color:var(--ink);
+  font-weight:600;
+  text-decoration:underline;
+  text-decoration-color:var(--brass);
+  text-underline-offset:3px;
+  background:none;
+  border:none;
+  font-size:inherit;
+  font-family:inherit;
+  cursor:pointer;
+  padding:0;
+}
+.dropzone .hint{
+  font-size:12px;
+  color:#8C93A3;
+  margin-top:6px;
+}
+
+.status-line{
+  margin-top:14px;
+  font-family:var(--mono);
+  font-size:12.5px;
+  color:var(--slate);
+  min-height:16px;
+}
+.status-line.err{ color:var(--rust); }
+
+/* queued files */
+#queuedFiles{
+  margin-top:14px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.file-chip{
+  font-family:var(--mono);
+  font-size:12px;
+  background:var(--navy-bg);
+  border:1px solid var(--hairline);
+  border-radius:999px;
+  padding:5px 8px 5px 12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--slate);
+}
+.file-chip button{
+  background:none;
+  border:none;
+  color:#9AA1AF;
+  cursor:pointer;
+  font-size:15px;
+  line-height:1;
+  padding:0 2px;
+}
+.file-chip button:hover{ color:var(--rust); }
+
+/* Swap pairs panel */
+.pairs-panel{
+  background:var(--navy-bg);
+  border:1px solid var(--hairline);
+  border-radius:6px;
+  padding:18px 20px 16px;
+}
+.swap-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+.swap-row input[type="text"]{
+  flex:1;
+  min-width:0;
+  border:1px solid var(--hairline);
+  border-radius:4px;
+  background:#fff;
+  font-family:var(--sans);
+  font-size:13.5px;
+  color:var(--ink);
+  padding:8px 10px;
+}
+.swap-row input[type="text"]::placeholder{ color:#A9AFBC; }
+.swap-arrow{
+  font-family:var(--mono);
+  color:var(--brass-dark);
+  font-size:15px;
+  flex:none;
+}
+.swap-row label.whole-word{
+  font-size:11px;
+  color:var(--slate);
+  display:flex;
+  align-items:center;
+  gap:4px;
+  flex:none;
+  white-space:nowrap;
+}
+.swap-row .row-remove{
+  background:none;
+  border:none;
+  color:#B7BCC7;
+  font-size:18px;
+  cursor:pointer;
+  line-height:1;
+  flex:none;
+  padding:0 2px;
+}
+.swap-row .row-remove:hover{ color:var(--rust); }
+.swap-row .row-stats{
+  font-family:var(--mono);
+  font-size:10.5px;
+  color:var(--sage);
+  flex:none;
+  white-space:nowrap;
+}
+
+.add-row-btn{
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:600;
+  background:none;
+  border:1.5px dashed var(--brass);
+  color:var(--brass-dark);
+  padding:8px 14px;
+  border-radius:4px;
+  cursor:pointer;
+  margin-top:4px;
+}
+.add-row-btn:hover{
+  background:rgba(169,129,74,0.1);
+}
+
+.run-row{
+  margin-top:26px;
+  display:flex;
+  justify-content:center;
+}
+button#runBtn{
+  font-family:var(--serif);
+  font-size:16px;
+  font-weight:600;
+  background:var(--ink);
+  color:#fff;
+  border:none;
+  padding:13px 30px;
+  border-radius:4px;
+  cursor:pointer;
+}
+button#runBtn:disabled{
+  background:#C7CBD3;
+  cursor:not-allowed;
+}
+button#runBtn:not(:disabled):hover{
+  background:#324467;
+}
+
+/* Cards (output) */
+#cards{
+  margin-top:28px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--hairline);
+  border-radius:4px;
+  position:relative;
+  box-shadow:0 1px 2px rgba(30,42,68,0.04);
+  overflow:visible;
+}
+
+.tab{
+  position:absolute;
+  top:-11px;
+  left:20px;
+  font-family:var(--mono);
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:0.09em;
+  padding:4px 10px;
+  border-radius:3px;
+  color:#fff;
+  background:var(--sage);
+}
+
+.card-body{
+  padding:26px 22px 20px;
+}
+
+.meta{
+  font-family:var(--mono);
+  font-size:12.5px;
+  color:var(--slate);
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 16px;
+  margin-bottom:14px;
+}
+.meta span{ white-space:nowrap; }
+.meta .meta-label{ color:#9AA1AF; }
+
+.swap-summary{
+  font-size:12.5px;
+  color:var(--slate);
+  margin:0 0 16px;
+  line-height:1.7;
+}
+.swap-summary .pair-line{
+  font-family:var(--mono);
+  font-size:11.5px;
+  display:block;
+}
+
+label.field-label{
+  display:block;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--slate);
+  margin-bottom:6px;
+  font-weight:600;
+}
+
+.filename-row{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  border-bottom:1.5px solid var(--hairline);
+  padding-bottom:8px;
+  margin-bottom:16px;
+}
+.filename-row input{
+  flex:1;
+  border:none;
+  outline:none;
+  font-family:var(--serif);
+  font-size:17px;
+  color:var(--ink);
+  background:transparent;
+  padding:2px 0;
+  min-width:0;
+}
+.filename-row .ext{
+  font-family:var(--serif);
+  font-size:17px;
+  color:#B7BCC7;
+}
+
+.card-actions{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+button.download-btn{
+  font-family:var(--sans);
+  font-size:13.5px;
+  font-weight:600;
+  background:var(--ink);
+  color:#fff;
+  border:none;
+  padding:9px 16px;
+  border-radius:4px;
+  cursor:pointer;
+  transition:background 0.15s ease, opacity 0.15s ease;
+}
+button.download-btn:hover{ background:#324467; }
+
+.stamp{
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.14em;
+  color:var(--sage);
+  border:1.5px solid var(--sage);
+  border-radius:999px;
+  padding:4px 12px;
+  transform:rotate(-6deg);
+  opacity:0;
+  transition:opacity 0.25s ease, transform 0.25s ease;
+}
+.stamp.show{
+  opacity:1;
+  animation:stampIn 0.28s ease;
+}
+@keyframes stampIn{
+  from{ opacity:0; transform:rotate(-6deg) scale(1.6); }
+  to{ opacity:1; transform:rotate(-6deg) scale(1); }
+}
+
+.error-box{
+  background:var(--rust-bg);
+  border:1px solid rgba(181,80,47,0.25);
+  color:var(--rust);
+  font-size:13px;
+  padding:10px 14px;
+  border-radius:4px;
+  margin-bottom:16px;
+}
+
+.remove-btn{
+  margin-left:auto;
+  background:none;
+  border:none;
+  color:#B7BCC7;
+  font-size:18px;
+  cursor:pointer;
+  line-height:1;
+  padding:2px 6px;
+}
+.remove-btn:hover{ color:var(--rust); }
+
+.card-top-row{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+}
+.card-top-row .meta{ flex:1; }
+
+.all-actions{
+  margin-top:30px;
+  display:flex;
+  justify-content:center;
+}
+button#downloadAll{
+  font-family:var(--serif);
+  font-size:15px;
+  font-weight:600;
+  background:transparent;
+  color:var(--ink);
+  border:1.5px solid var(--ink);
+  padding:12px 28px;
+  border-radius:4px;
+  cursor:pointer;
+}
+button#downloadAll:hover{
+  background:var(--ink);
+  color:#fff;
+}
+
+@media (max-width:600px){
+  h1{ font-size:30px; }
+  .page{ padding:40px 16px 80px; }
+  .swap-row{ flex-wrap:wrap; }
+}
+
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">FILE CLERK</p>
+    <h1>Mirroring Documents</h1>
+    <p class="sub">Upload a Word document and list the words that need to swap places &mdash; a husband's and wife's name, for instance. Each pair is swapped safely using a hidden placeholder, so mutual replacements never collide and overwrite each other. Everything runs inside this browser tab &mdash; nothing is uploaded anywhere.</p>
+  </header>
+
+  <div id="dropzone" class="dropzone">
+    <input type="file" id="fileInput" multiple accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4M7 9l5-5 5 5M12 4v12"/></svg>
+    <p>Drag a Word document (.docx) here, or <button type="button" id="browseBtn" class="browse">browse</button></p>
+    <p class="hint">Any number of documents &mdash; the same word swaps apply to all of them</p>
+  </div>
+
+  <div id="queuedFiles"></div>
+
+  <p id="globalStatus" class="status-line"></p>
+
+  <h2 class="section-title">Words to swap</h2>
+  <p class="section-sub">Each row is mirrored using the three-step placeholder swap: A &rarr; <code>***</code>, then B &rarr; A, then <code>***</code> &rarr; B. Untick &ldquo;whole word&rdquo; only if you need a swap to match inside other words too.</p>
+  <div class="pairs-panel">
+    <div id="pairRows"></div>
+    <button type="button" id="addRowBtn" class="add-row-btn">+ add another pair</button>
+  </div>
+
+  <div class="run-row">
+    <button id="runBtn" disabled>Run mirroring</button>
+  </div>
+
+  <div id="cards"></div>
+
+  <div id="allActions" class="all-actions" hidden>
+    <button id="downloadAll">Download all mirrored</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var dropzone = document.getElementById("dropzone");
+  var fileInput = document.getElementById("fileInput");
+  var browseBtn = document.getElementById("browseBtn");
+  var queuedFilesEl = document.getElementById("queuedFiles");
+  var globalStatus = document.getElementById("globalStatus");
+  var pairRowsEl = document.getElementById("pairRows");
+  var addRowBtn = document.getElementById("addRowBtn");
+  var runBtn = document.getElementById("runBtn");
+  var cardsEl = document.getElementById("cards");
+  var allActions = document.getElementById("allActions");
+  var downloadAllBtn = document.getElementById("downloadAll");
+
+  var queuedFiles = []; // { id, file }
+  var pairRows = [];    // { id, aInput, bInput, wholeWordInput, statsEl }
+  var outputCards = [];
+  var idCounter = 0;
+
+  function setGlobalStatus(msg, isErr) {
+    globalStatus.textContent = msg || "";
+    globalStatus.className = "status-line" + (isErr ? " err" : "");
+  }
+
+  // ---------- queued files ----------
+
+  function renderQueuedFiles() {
+    queuedFilesEl.innerHTML = "";
+    queuedFiles.forEach(function (qf) {
+      var chip = document.createElement("div");
+      chip.className = "file-chip";
+      var label = document.createElement("span");
+      label.textContent = qf.file.name;
+      chip.appendChild(label);
+      var rm = document.createElement("button");
+      rm.type = "button";
+      rm.textContent = "\u00d7";
+      rm.title = "Remove";
+      rm.addEventListener("click", function () {
+        queuedFiles = queuedFiles.filter(function (f) { return f.id !== qf.id; });
+        renderQueuedFiles();
+        updateRunButton();
+      });
+      chip.appendChild(rm);
+      queuedFilesEl.appendChild(chip);
+    });
+  }
+
+  function handleFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList).filter(function (f) {
+      return /\.docx$/i.test(f.name);
+    });
+    if (!files.length) {
+      setGlobalStatus("Only .docx Word documents are supported.", true);
+      return;
+    }
+    files.forEach(function (f) {
+      idCounter++;
+      queuedFiles.push({ id: idCounter, file: f });
+    });
+    renderQueuedFiles();
+    updateRunButton();
+    setGlobalStatus("");
+  }
+
+  ["dragenter", "dragover"].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.add("drag-over");
+    });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.remove("drag-over");
+    });
+  });
+  dropzone.addEventListener("drop", function (e) {
+    if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+  });
+  dropzone.addEventListener("click", function (e) {
+    if (e.target === browseBtn) return;
+    fileInput.click();
+  });
+  browseBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    fileInput.click();
+  });
+  fileInput.addEventListener("change", function () {
+    handleFiles(fileInput.files);
+    fileInput.value = "";
+  });
+
+  // ---------- swap pair rows ----------
+
+  function addPairRow(prefillA, prefillB) {
+    idCounter++;
+    var id = idCounter;
+
+    var row = document.createElement("div");
+    row.className = "swap-row";
+
+    var aInput = document.createElement("input");
+    aInput.type = "text";
+    aInput.placeholder = "e.g. Michael Chen";
+    if (prefillA) aInput.value = prefillA;
+
+    var arrow = document.createElement("span");
+    arrow.className = "swap-arrow";
+    arrow.textContent = "\u2194";
+
+    var bInput = document.createElement("input");
+    bInput.type = "text";
+    bInput.placeholder = "e.g. Sarah Chen";
+    if (prefillB) bInput.value = prefillB;
+
+    var wholeWordLabel = document.createElement("label");
+    wholeWordLabel.className = "whole-word";
+    var wholeWordInput = document.createElement("input");
+    wholeWordInput.type = "checkbox";
+    wholeWordInput.checked = true;
+    wholeWordLabel.appendChild(wholeWordInput);
+    wholeWordLabel.appendChild(document.createTextNode("whole word"));
+
+    var statsEl = document.createElement("span");
+    statsEl.className = "row-stats";
+
+    var removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "row-remove";
+    removeBtn.textContent = "\u00d7";
+    removeBtn.title = "Remove pair";
+    removeBtn.addEventListener("click", function () {
+      row.remove();
+      pairRows = pairRows.filter(function (r) { return r.id !== id; });
+      updateRunButton();
+    });
+
+    [aInput, bInput].forEach(function (inp) {
+      inp.addEventListener("input", updateRunButton);
+    });
+
+    row.appendChild(aInput);
+    row.appendChild(arrow);
+    row.appendChild(bInput);
+    row.appendChild(wholeWordLabel);
+    row.appendChild(statsEl);
+    row.appendChild(removeBtn);
+    pairRowsEl.appendChild(row);
+
+    pairRows.push({
+      id: id,
+      aInput: aInput,
+      bInput: bInput,
+      wholeWordInput: wholeWordInput,
+      statsEl: statsEl
+    });
+    updateRunButton();
+  }
+
+  addRowBtn.addEventListener("click", function () { addPairRow(); });
+
+  function getValidPairs() {
+    return pairRows
+      .map(function (r) {
+        return {
+          row: r,
+          a: r.aInput.value.trim(),
+          b: r.bInput.value.trim(),
+          wholeWord: r.wholeWordInput.checked
+        };
+      })
+      .filter(function (p) { return p.a && p.b && p.a !== p.b; });
+  }
+
+  function updateRunButton() {
+    runBtn.disabled = !(queuedFiles.length > 0 && getValidPairs().length > 0);
+  }
+
+  // seed with one empty row to start
+  addPairRow();
+
+  // ---------- the safe three-step mirror swap ----------
+
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // Builds a regex that finds `target` either anywhere, or only as a
+  // "whole word" (not glued to letters/digits/apostrophes on either side).
+  function buildFindRegex(target, wholeWord) {
+    var esc = escapeRegExp(target);
+    if (!wholeWord) return new RegExp(esc, "g");
+    return new RegExp("(^|[^A-Za-z0-9\u2019'\\-])(" + esc + ")(?![A-Za-z0-9\u2019'\\-])", "g");
+  }
+
+  function countMatches(text, target, wholeWord) {
+    var re = buildFindRegex(target, wholeWord);
+    var m = text.match(re);
+    return m ? m.length : 0;
+  }
+
+  function replaceWord(text, target, replacement, wholeWord) {
+    var re = buildFindRegex(target, wholeWord);
+    if (!wholeWord) return text.split(target).join(replacement);
+    return text.replace(re, function (match, prefix) {
+      return prefix + replacement;
+    });
+  }
+
+  // Applies every swap pair to one XML string using the safe placeholder
+  // technique, and returns { text, counts: [{a,b,countA,countB}] }
+  function mirrorText(text, pairs) {
+    var counts = [];
+    pairs.forEach(function (p, i) {
+      var token = "\u0002MIRRORSWAP" + i + "TOKEN\u0002";
+      var countA = countMatches(text, p.a, p.wholeWord);
+      var countB = countMatches(text, p.b, p.wholeWord);
+      text = replaceWord(text, p.a, token, p.wholeWord);
+      text = replaceWord(text, p.b, p.a, p.wholeWord);
+      text = replaceWord(text, token, p.b, p.wholeWord);
+      counts.push({ a: p.a, b: p.b, countA: countA, countB: countB });
+    });
+    return { text: text, counts: counts };
+  }
+
+  var XML_PART_RE = /^word\/(document|header\d*|footer\d*|footnotes|endnotes|comments)\.xml$/i;
+
+  // ---------- run-aware XML mirroring ----------
+  //
+  // Word frequently splits a single visible name across several <w:t> runs
+  // (spell-check markers, bold/italic boundaries, tracked changes, etc).
+  // A plain string/regex search directly on the XML misses any occurrence
+  // that isn't sitting inside one single <w:t> element. To fix that, we:
+  //   1. Pull out every <w:t> node in document order and stitch their text
+  //      together into one plain-text string (with a map back to each node).
+  //   2. Find every match against that stitched string, so matches spanning
+  //      run/tag boundaries are still found.
+  //   3. Write each match's replacement into the node where the match
+  //      starts, and blank out the leftover matched characters in any
+  //      node(s) the match continues into - leaving all untouched text and
+  //      formatting exactly as it was.
+
+  function decodeXmlText(s) {
+    return s
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&apos;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, "&");
+  }
+
+  function encodeXmlText(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // <w:t> elements never contain nested tags, only text, so this is safe.
+  function extractTextNodes(xml) {
+    var nodes = [];
+    var re = /<w:t((?:\s+[^>]*)?)>([\s\S]*?)<\/w:t>/g;
+    var m;
+    while ((m = re.exec(xml)) !== null) {
+      nodes.push({
+        start: m.index,
+        end: re.lastIndex,
+        attrs: m[1],
+        text: decodeXmlText(m[2])
+      });
+    }
+    return nodes;
+  }
+
+  function buildPlainText(nodes) {
+    var plain = "";
+    for (var i = 0; i < nodes.length; i++) plain += nodes[i].text;
+    return plain;
+  }
+
+  // Returns [{start,end}] of every match of `target` in `text` (absolute
+  // character offsets, excluding the whole-word prefix character).
+  function findMatches(text, target, wholeWord) {
+    var re = buildFindRegex(target, wholeWord);
+    var matches = [];
+    var m;
+    while ((m = re.exec(text)) !== null) {
+      var start, end;
+      if (wholeWord) {
+        start = m.index + m[1].length;
+        end = start + m[2].length;
+      } else {
+        start = m.index;
+        end = start + target.length;
+      }
+      matches.push({ start: start, end: end });
+      if (re.lastIndex === m.index) re.lastIndex++;
+    }
+    return matches;
+  }
+
+  // Collects every match for every pair (in both directions) against the
+  // pristine plain text, tags each with its replacement, sorts them, and
+  // drops any that overlap an earlier (already-kept) match.
+  function collectRanges(plain, pairs) {
+    var all = [];
+    pairs.forEach(function (p, pairIndex) {
+      findMatches(plain, p.a, p.wholeWord).forEach(function (r) {
+        all.push({ start: r.start, end: r.end, replacement: p.b, pairIndex: pairIndex, dir: "A" });
+      });
+      findMatches(plain, p.b, p.wholeWord).forEach(function (r) {
+        all.push({ start: r.start, end: r.end, replacement: p.a, pairIndex: pairIndex, dir: "B" });
+      });
+    });
+    all.sort(function (x, y) { return x.start - y.start; });
+
+    var kept = [];
+    var lastEnd = -1;
+    all.forEach(function (r) {
+      if (r.start >= lastEnd) {
+        kept.push(r);
+        lastEnd = r.end;
+      }
+    });
+    return kept;
+  }
+
+  // Walks the node list and the (sorted, non-overlapping) ranges together,
+  // producing the replacement text for each node.
+  function applyRangesToNodes(nodes, ranges) {
+    var newTexts = new Array(nodes.length);
+    var rIdx = 0;
+    var cursor = 0;
+
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var nodeStart = cursor;
+      var nodeEnd = cursor + node.text.length;
+      var pieces = [];
+      var localPos = 0;
+
+      while (rIdx < ranges.length && ranges[rIdx].start < nodeEnd) {
+        var r = ranges[rIdx];
+        var startLocal = Math.max(r.start, nodeStart) - nodeStart;
+        var endLocal = Math.min(r.end, nodeEnd) - nodeStart;
+
+        if (startLocal > localPos) pieces.push(node.text.slice(localPos, startLocal));
+        if (r.start >= nodeStart) pieces.push(r.replacement); // emit once, at the start node
+        localPos = endLocal;
+
+        if (r.end <= nodeEnd) rIdx++;
+        else break; // range continues into the next node(s)
+      }
+
+      if (localPos < node.text.length) pieces.push(node.text.slice(localPos));
+      newTexts[i] = pieces.join("");
+      cursor = nodeEnd;
+    }
+    return newTexts;
+  }
+
+  function buildTNode(attrs, text) {
+    var needsPreserve = /^\s|\s$|\s\s/.test(text) && !/xml:space\s*=/.test(attrs);
+    return "<w:t" + attrs + (needsPreserve ? ' xml:space="preserve"' : "") + ">" + encodeXmlText(text) + "</w:t>";
+  }
+
+  // Mirrors one XML part (document.xml, a header/footer, etc). Matches are
+  // found across the stitched plain text so they survive run splits, then
+  // written back node-by-node so untouched text/formatting is unaffected.
+  function mirrorXmlPart(xml, pairs) {
+    var nodes = extractTextNodes(xml);
+    var plain = buildPlainText(nodes);
+    var ranges = collectRanges(plain, pairs);
+
+    var counts = pairs.map(function (p) { return { a: p.a, b: p.b, countA: 0, countB: 0 }; });
+    ranges.forEach(function (r) {
+      if (r.dir === "A") counts[r.pairIndex].countA++;
+      else counts[r.pairIndex].countB++;
+    });
+
+    if (!ranges.length) return { text: xml, counts: counts };
+
+    var newTexts = applyRangesToNodes(nodes, ranges);
+
+    var out = [];
+    var last = 0;
+    for (var i = 0; i < nodes.length; i++) {
+      out.push(xml.slice(last, nodes[i].start));
+      out.push(buildTNode(nodes[i].attrs, newTexts[i]));
+      last = nodes[i].end;
+    }
+    out.push(xml.slice(last));
+    return { text: out.join(""), counts: counts };
+  }
+
+  async function mirrorDocx(arrayBuffer, pairs) {
+    var zip = await JSZip.loadAsync(arrayBuffer);
+    var aggregateCounts = null;
+    var partsTouched = 0;
+
+    var paths = Object.keys(zip.files).filter(function (p) { return XML_PART_RE.test(p); });
+    for (var i = 0; i < paths.length; i++) {
+      var path = paths[i];
+      var xml = await zip.file(path).async("string");
+      var result = mirrorXmlPart(xml, pairs);
+      zip.file(path, result.text);
+      partsTouched++;
+      if (!aggregateCounts) {
+        aggregateCounts = result.counts.map(function (c) { return { a: c.a, b: c.b, countA: 0, countB: 0 }; });
+      }
+      result.counts.forEach(function (c, idx) {
+        aggregateCounts[idx].countA += c.countA;
+        aggregateCounts[idx].countB += c.countB;
+      });
+    }
+
+    var blob = await zip.generateAsync({
+      type: "blob",
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    });
+    return { blob: blob, counts: aggregateCounts || [], partsTouched: partsTouched };
+  }
+
+  // ---------- output cards ----------
+
+  function stripExt(name) {
+    return name.replace(/\.docx$/i, "");
+  }
+
+  function buildMeta(result) {
+    var wrap = document.createElement("div");
+    wrap.className = "meta";
+    function add(label, value) {
+      var s = document.createElement("span");
+      var l = document.createElement("span");
+      l.className = "meta-label";
+      l.textContent = label + " ";
+      s.appendChild(l);
+      s.appendChild(document.createTextNode(value));
+      wrap.appendChild(s);
+    }
+    var totalSwaps = result.counts.reduce(function (sum, c) { return sum + c.countA + c.countB; }, 0);
+    add("Replacements", String(totalSwaps));
+    add("Pairs", String(result.counts.length));
+    return wrap;
+  }
+
+  function buildSummary(result) {
+    var box = document.createElement("div");
+    box.className = "swap-summary";
+    result.counts.forEach(function (c) {
+      var line = document.createElement("span");
+      line.className = "pair-line";
+      line.textContent = c.a + " (" + c.countA + " found) \u2194 " + c.b + " (" + c.countB + " found)";
+      box.appendChild(line);
+    });
+    return box;
+  }
+
+  function addOutputCard(originalFile, result, suggestedBaseName) {
+    idCounter++;
+    var id = idCounter;
+
+    var cardEl = document.createElement("div");
+    cardEl.className = "card";
+
+    var tab = document.createElement("div");
+    tab.className = "tab";
+    tab.textContent = "MIRRORED";
+    cardEl.appendChild(tab);
+
+    var body = document.createElement("div");
+    body.className = "card-body";
+
+    var topRow = document.createElement("div");
+    topRow.className = "card-top-row";
+    topRow.appendChild(buildMeta(result));
+
+    var removeBtn = document.createElement("button");
+    removeBtn.className = "remove-btn";
+    removeBtn.title = "Remove";
+    removeBtn.textContent = "\u00d7";
+    removeBtn.addEventListener("click", function () {
+      cardEl.remove();
+      outputCards = outputCards.filter(function (c) { return c.id !== id; });
+      toggleAllActions();
+    });
+    topRow.appendChild(removeBtn);
+    body.appendChild(topRow);
+
+    if (!result.counts.length || result.counts.every(function (c) { return c.countA === 0 && c.countB === 0; })) {
+      var warnBox = document.createElement("div");
+      warnBox.className = "error-box";
+      warnBox.textContent = "None of the words in your list were found in this document \u2014 check spelling and capitalisation.";
+      body.appendChild(warnBox);
+    }
+
+    body.appendChild(buildSummary(result));
+
+    var label = document.createElement("label");
+    label.className = "field-label";
+    label.textContent = "New file name";
+    body.appendChild(label);
+
+    var row = document.createElement("div");
+    row.className = "filename-row";
+    var input = document.createElement("input");
+    input.type = "text";
+    input.value = suggestedBaseName;
+    var ext = document.createElement("span");
+    ext.className = "ext";
+    ext.textContent = ".docx";
+    row.appendChild(input);
+    row.appendChild(ext);
+    body.appendChild(row);
+
+    var origLine = document.createElement("div");
+    origLine.className = "meta";
+    origLine.style.marginBottom = "0";
+    var origSpan = document.createElement("span");
+    var origLabel = document.createElement("span");
+    origLabel.className = "meta-label";
+    origLabel.textContent = "from: ";
+    origSpan.appendChild(origLabel);
+    origSpan.appendChild(document.createTextNode(originalFile.name));
+    origLine.appendChild(origSpan);
+    body.appendChild(origLine);
+
+    var actions = document.createElement("div");
+    actions.className = "card-actions";
+    actions.style.marginTop = "16px";
+
+    var dlBtn = document.createElement("button");
+    dlBtn.className = "download-btn";
+    dlBtn.textContent = "Download";
+
+    var stamp = document.createElement("span");
+    stamp.className = "stamp";
+    stamp.textContent = "SAVED";
+
+    actions.appendChild(dlBtn);
+    actions.appendChild(stamp);
+    body.appendChild(actions);
+
+    cardEl.appendChild(body);
+    cardsEl.appendChild(cardEl);
+
+    var card = {
+      id: id,
+      blob: result.blob,
+      filenameInput: input,
+      downloadBtn: dlBtn,
+      stamp: stamp
+    };
+    outputCards.push(card);
+
+    dlBtn.addEventListener("click", function () { triggerDownload(card); });
+
+    toggleAllActions();
+  }
+
+  function finalFilename(card) {
+    var raw = card.filenameInput.value.trim().replace(/,/g, "") || "mirrored-document";
+    return raw + ".docx";
+  }
+
+  function triggerDownload(card) {
+    var url = URL.createObjectURL(card.blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = finalFilename(card);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    card.stamp.classList.add("show");
+  }
+
+  function toggleAllActions() {
+    allActions.hidden = outputCards.length < 2;
+  }
+
+  downloadAllBtn.addEventListener("click", function () {
+    outputCards.forEach(function (card, i) {
+      setTimeout(function () { triggerDownload(card); }, i * 300);
+    });
+  });
+
+  // ---------- run ----------
+
+  runBtn.addEventListener("click", async function () {
+    var pairs = getValidPairs();
+    if (!queuedFiles.length || !pairs.length) return;
+
+    runBtn.disabled = true;
+    setGlobalStatus("Mirroring " + queuedFiles.length + " document" + (queuedFiles.length === 1 ? "" : "s") + "\u2026");
+
+    for (var i = 0; i < queuedFiles.length; i++) {
+      var qf = queuedFiles[i];
+      try {
+        var arrayBuffer = await qf.file.arrayBuffer();
+        var mappedPairs = pairs.map(function (p) {
+          return { a: p.a, b: p.b, wholeWord: p.wholeWord };
+        });
+        var result = await mirrorDocx(arrayBuffer, mappedPairs);
+
+        var originalBase = stripExt(qf.file.name);
+        var mirroredBase = mirrorText(originalBase, mappedPairs).text;
+        var suggestedBaseName = (mirroredBase === originalBase)
+          ? originalBase + " - mirrored"
+          : mirroredBase;
+
+        addOutputCard(qf.file, result, suggestedBaseName);
+      } catch (err) {
+        setGlobalStatus("Couldn't process " + qf.file.name + ": " + (err && err.message ? err.message : err), true);
+      }
+    }
+
+    setGlobalStatus("");
+    updateRunButton();
+  });
+})();
+</script>
+</body>
+</html>

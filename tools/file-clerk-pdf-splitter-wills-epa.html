@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>splitting-documents</title>
+<style>
+:root{
+  --ink:#1E2A44;
+  --parchment:#F6F3EC;
+  --card:#FFFFFF;
+  --hairline:#DCD5C4;
+  --brass:#A9814A;
+  --brass-dark:#8A6934;
+  --slate:#586174;
+  --sage:#4C7A61;
+  --sage-bg:#EAF1EC;
+  --rust:#B5502F;
+  --rust-bg:#F8EAE4;
+  --navy-bg:#EEF0F5;
+  --serif: Cambria, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Consolas", "Menlo", monospace;
+}
+
+*{box-sizing:border-box;}
+
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--parchment);
+  color:var(--ink);
+  font-family:var(--sans);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(30,42,68,0.05) 1px, transparent 0);
+  background-size:22px 22px;
+}
+
+.page{
+  max-width:820px;
+  margin:0 auto;
+  padding:56px 24px 96px;
+}
+
+header{
+  margin-bottom:36px;
+}
+
+.eyebrow{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:0.18em;
+  color:var(--brass-dark);
+  margin:0 0 10px;
+  font-weight:600;
+}
+
+h1{
+  font-family:var(--serif);
+  font-size:38px;
+  line-height:1.08;
+  margin:0 0 12px;
+  font-weight:600;
+  letter-spacing:-0.01em;
+}
+
+.sub{
+  font-size:15px;
+  color:var(--slate);
+  line-height:1.55;
+  max-width:62ch;
+  margin:0;
+}
+
+h2.section-title{
+  font-family:var(--serif);
+  font-size:19px;
+  font-weight:600;
+  margin:34px 0 6px;
+}
+p.section-sub{
+  font-size:13px;
+  color:var(--slate);
+  margin:0 0 16px;
+  line-height:1.5;
+  max-width:64ch;
+}
+
+/* Dropzone */
+.dropzone{
+  border:1.5px dashed var(--brass);
+  border-radius:6px;
+  background:rgba(169,129,74,0.045);
+  padding:36px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:background 0.15s ease, border-color 0.15s ease;
+  position:relative;
+}
+.dropzone.drag-over{
+  background:rgba(169,129,74,0.13);
+  border-color:var(--brass-dark);
+}
+.dropzone svg{
+  width:34px;
+  height:34px;
+  color:var(--brass-dark);
+  margin-bottom:10px;
+}
+.dropzone p{
+  margin:0;
+  color:var(--slate);
+  font-size:14.5px;
+}
+.dropzone .browse{
+  color:var(--ink);
+  font-weight:600;
+  text-decoration:underline;
+  text-decoration-color:var(--brass);
+  text-underline-offset:3px;
+  background:none;
+  border:none;
+  font-size:inherit;
+  font-family:inherit;
+  cursor:pointer;
+  padding:0;
+}
+.dropzone .hint{
+  font-size:12px;
+  color:#8C93A3;
+  margin-top:6px;
+}
+.dropzone.has-file{
+  cursor:default;
+  padding:20px 24px;
+}
+
+.status-line{
+  margin-top:14px;
+  font-family:var(--mono);
+  font-size:12.5px;
+  color:var(--slate);
+  min-height:16px;
+}
+.status-line.err{ color:var(--rust); }
+
+/* queued file */
+#queuedFiles{
+  margin-top:14px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.file-chip{
+  font-family:var(--mono);
+  font-size:12px;
+  background:var(--navy-bg);
+  border:1px solid var(--hairline);
+  border-radius:999px;
+  padding:5px 8px 5px 12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--slate);
+}
+.file-chip button{
+  background:none;
+  border:none;
+  color:#9AA1AF;
+  cursor:pointer;
+  font-size:15px;
+  line-height:1;
+  padding:0 2px;
+}
+.file-chip button:hover{ color:var(--rust); }
+
+/* Page thumbnail grid */
+#thumbSection{ margin-top:8px; }
+.thumb-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px 6px;
+  padding:6px 4px 10px;
+}
+.thumb-wrap{
+  position:relative;
+  width:92px;
+}
+.thumb-wrap.split-after{
+  margin-right:16px;
+}
+.thumb-wrap.split-after::after{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:16px;
+  right:-11px;
+  width:2px;
+  background:repeating-linear-gradient(var(--rust),var(--rust) 4px,transparent 4px,transparent 8px);
+}
+.thumb-card{
+  border:1px solid var(--hairline);
+  border-radius:4px;
+  overflow:hidden;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(30,42,68,0.05);
+  line-height:0;
+}
+.thumb-card canvas{ display:block; width:100%; height:auto; }
+.thumb-num{
+  text-align:center;
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--slate);
+  padding:4px 0 0;
+}
+.split-toggle{
+  position:absolute;
+  top:-9px;
+  right:-9px;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  border:1.5px solid var(--brass);
+  background:#fff;
+  color:var(--brass-dark);
+  font-size:11px;
+  line-height:19px;
+  text-align:center;
+  cursor:pointer;
+  box-shadow:0 1px 2px rgba(30,42,68,0.1);
+  user-select:none;
+}
+.split-toggle:hover{ background:rgba(169,129,74,0.12); }
+.split-toggle.active{
+  background:var(--rust);
+  border-color:var(--rust);
+  color:#fff;
+}
+.split-toggle.active:hover{ background:#9c4527; }
+
+/* Segments panel (reuses pairs-panel look) */
+.ocr-row{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px 14px;
+  margin:14px 0 30px;
+}
+button#ocrBtn{
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:600;
+  background:none;
+  border:1.5px solid var(--brass);
+  color:var(--brass-dark);
+  padding:9px 14px;
+  border-radius:4px;
+  cursor:pointer;
+}
+button#ocrBtn:hover{ background:rgba(169,129,74,0.1); }
+button#ocrBtn:disabled{
+  border-color:#C7CBD3;
+  color:#B7BCC7;
+  cursor:not-allowed;
+  background:none;
+}
+.ocr-row .hint{
+  font-size:12px;
+  color:#8C93A3;
+  line-height:1.5;
+  flex:1;
+  min-width:220px;
+}
+
+.date-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+.date-row .field-label{ margin-bottom:0; white-space:nowrap; }
+.date-row input{
+  border:1px solid var(--hairline);
+  border-radius:4px;
+  background:#fff;
+  font-family:var(--mono);
+  font-size:13px;
+  color:var(--ink);
+  padding:8px 10px;
+  width:190px;
+}
+
+.pairs-panel{
+  background:var(--navy-bg);
+  border:1px solid var(--hairline);
+  border-radius:6px;
+  padding:18px 20px 16px;
+}
+.segment-item{ margin-bottom:12px; }
+.segment-item:last-child{ margin-bottom:0; }
+.segment-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.seg-hint{
+  font-family:var(--mono);
+  font-size:10.5px;
+  color:var(--sage);
+  padding:4px 0 0 2px;
+}
+.seg-hint.dim{ color:#9AA1AF; }
+.segment-row .seg-range{
+  font-family:var(--mono);
+  font-size:11.5px;
+  color:var(--sage);
+  flex:none;
+  white-space:nowrap;
+  min-width:118px;
+}
+.segment-row input[type="text"]{
+  flex:1;
+  min-width:0;
+  border:1px solid var(--hairline);
+  border-radius:4px;
+  background:#fff;
+  font-family:var(--sans);
+  font-size:13.5px;
+  color:var(--ink);
+  padding:8px 10px;
+}
+.segment-row .seg-ext{
+  font-family:var(--mono);
+  color:#A9AFBC;
+  font-size:12.5px;
+  flex:none;
+}
+
+.run-row{
+  margin-top:26px;
+  display:flex;
+  justify-content:center;
+}
+button#runBtn{
+  font-family:var(--serif);
+  font-size:16px;
+  font-weight:600;
+  background:var(--ink);
+  color:#fff;
+  border:none;
+  padding:13px 30px;
+  border-radius:4px;
+  cursor:pointer;
+}
+button#runBtn:disabled{
+  background:#C7CBD3;
+  cursor:not-allowed;
+}
+button#runBtn:not(:disabled):hover{
+  background:#324467;
+}
+
+/* Cards (output) */
+#cards{
+  margin-top:28px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--hairline);
+  border-radius:4px;
+  position:relative;
+  box-shadow:0 1px 2px rgba(30,42,68,0.04);
+  overflow:visible;
+}
+
+.tab{
+  position:absolute;
+  top:-11px;
+  left:20px;
+  font-family:var(--mono);
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:0.09em;
+  padding:4px 10px;
+  border-radius:3px;
+  color:#fff;
+  background:var(--sage);
+}
+
+.card-body{
+  padding:26px 22px 20px;
+}
+
+.meta{
+  font-family:var(--mono);
+  font-size:12.5px;
+  color:var(--slate);
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 16px;
+  margin-bottom:14px;
+}
+.meta span{ white-space:nowrap; }
+.meta .meta-label{ color:#9AA1AF; }
+
+.swap-summary{
+  font-size:12.5px;
+  color:var(--slate);
+  margin:0 0 16px;
+  line-height:1.7;
+}
+.swap-summary .pair-line{
+  font-family:var(--mono);
+  font-size:11.5px;
+  display:block;
+}
+
+label.field-label{
+  display:block;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--slate);
+  margin-bottom:6px;
+  font-weight:600;
+}
+
+.filename-row{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  border-bottom:1.5px solid var(--hairline);
+  padding-bottom:8px;
+  margin-bottom:16px;
+}
+.filename-row input{
+  flex:1;
+  border:none;
+  outline:none;
+  font-family:var(--serif);
+  font-size:17px;
+  color:var(--ink);
+  background:transparent;
+  padding:2px 0;
+  min-width:0;
+}
+.filename-row .ext{
+  font-family:var(--serif);
+  font-size:17px;
+  color:#B7BCC7;
+}
+
+.card-actions{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+button.download-btn{
+  font-family:var(--sans);
+  font-size:13.5px;
+  font-weight:600;
+  background:var(--ink);
+  color:#fff;
+  border:none;
+  padding:9px 16px;
+  border-radius:4px;
+  cursor:pointer;
+  transition:background 0.15s ease, opacity 0.15s ease;
+}
+button.download-btn:hover{ background:#324467; }
+
+.stamp{
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.14em;
+  color:var(--sage);
+  border:1.5px solid var(--sage);
+  border-radius:999px;
+  padding:4px 12px;
+  transform:rotate(-6deg);
+  opacity:0;
+  transition:opacity 0.25s ease, transform 0.25s ease;
+}
+.stamp.show{
+  opacity:1;
+  animation:stampIn 0.28s ease;
+}
+@keyframes stampIn{
+  from{ opacity:0; transform:rotate(-6deg) scale(1.6); }
+  to{ opacity:1; transform:rotate(-6deg) scale(1); }
+}
+
+.error-box{
+  background:var(--rust-bg);
+  border:1px solid rgba(181,80,47,0.25);
+  color:var(--rust);
+  font-size:13px;
+  padding:10px 14px;
+  border-radius:4px;
+  margin-bottom:16px;
+}
+
+.remove-btn{
+  margin-left:auto;
+  background:none;
+  border:none;
+  color:#B7BCC7;
+  font-size:18px;
+  cursor:pointer;
+  line-height:1;
+  padding:2px 6px;
+}
+.remove-btn:hover{ color:var(--rust); }
+
+.card-top-row{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+}
+.card-top-row .meta{ flex:1; }
+
+.all-actions{
+  margin-top:30px;
+  display:flex;
+  justify-content:center;
+}
+button#downloadAll{
+  font-family:var(--serif);
+  font-size:15px;
+  font-weight:600;
+  background:transparent;
+  color:var(--ink);
+  border:1.5px solid var(--ink);
+  padding:12px 28px;
+  border-radius:4px;
+  cursor:pointer;
+}
+button#downloadAll:hover{
+  background:var(--ink);
+  color:#fff;
+}
+
+@media (max-width:600px){
+  h1{ font-size:30px; }
+  .page{ padding:40px 16px 80px; }
+  .segment-row{ flex-wrap:wrap; }
+  .segment-row .seg-range{ min-width:0; }
+}
+
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">FILE CLERK</p>
+    <h1>Splitting Documents</h1>
+    <p class="sub">Upload a combined PDF &mdash; a Will filed together with an EPA, for instance &mdash; and mark where each individual document ends. Where the PDF has a text layer, the tool reads each piece to guess its type, the person's name and the execution date, and pre-fills the file name for you to check. Page previews render right in this tab, and the split itself runs instantly with no upload or OCR pass. Nothing leaves this browser tab.</p>
+  </header>
+
+  <div id="dropzone" class="dropzone">
+    <input type="file" id="fileInput" accept=".pdf,application/pdf" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4M7 9l5-5 5 5M12 4v12"/></svg>
+    <p>Drag a PDF here, or <button type="button" id="browseBtn" class="browse">browse</button></p>
+    <p class="hint">One combined PDF at a time</p>
+  </div>
+
+  <div id="queuedFiles"></div>
+
+  <p id="globalStatus" class="status-line"></p>
+
+  <div id="thumbSection" style="display:none;">
+    <h2 class="section-title">Pages</h2>
+    <p class="section-sub">Click the <strong>&#9986;</strong> badge on a page to mark it as the last page of a document. Everything after it starts the next one. If the PDF is a scan with no text layer, use the OCR scan below instead of clicking through every page by hand.</p>
+    <div id="thumbGrid" class="thumb-grid"></div>
+
+    <div class="ocr-row">
+      <button type="button" id="ocrBtn">&#128269; Scan with OCR (find Will/EPA boundaries &amp; names)</button>
+      <span class="hint">Reads the top of every page as an image &mdash; slower than the text-layer check above, but works on scans.</span>
+    </div>
+
+    <h2 class="section-title">Output files</h2>
+    <p class="section-sub">One row per document the split will produce. Where possible, the type (Will / EPA) and name are pre-read from the document itself &mdash; always double-check the guess. The date below is applied to every file name; edit anything freely.</p>
+
+    <div class="date-row">
+      <label class="field-label" for="globalDate">Date for all file names</label>
+      <input type="text" id="globalDate" placeholder="YYYY.MM.DD, e.g. 2026.08.04">
+    </div>
+
+    <div class="pairs-panel">
+      <div id="segmentRows"></div>
+    </div>
+
+    <div class="run-row">
+      <button id="runBtn" disabled>Split PDF</button>
+    </div>
+  </div>
+
+  <div id="cards"></div>
+
+  <div id="allActions" class="all-actions" hidden>
+    <button id="downloadAll">Download all documents</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+
+  var dropzone = document.getElementById("dropzone");
+  var fileInput = document.getElementById("fileInput");
+  var browseBtn = document.getElementById("browseBtn");
+  var queuedFilesEl = document.getElementById("queuedFiles");
+  var globalStatus = document.getElementById("globalStatus");
+  var thumbSection = document.getElementById("thumbSection");
+  var thumbGrid = document.getElementById("thumbGrid");
+  var segmentRowsEl = document.getElementById("segmentRows");
+  var runBtn = document.getElementById("runBtn");
+  var ocrBtn = document.getElementById("ocrBtn");
+  var globalDateInput = document.getElementById("globalDate");
+  var cardsEl = document.getElementById("cards");
+  var allActions = document.getElementById("allActions");
+  var downloadAllBtn = document.getElementById("downloadAll");
+
+  var THUMB_WIDTH = 92; // css px
+
+  var currentFile = null;   // File
+  var originalBytes = null; // ArrayBuffer, kept pristine
+  var currentPdfDoc = null; // live pdf.js document, kept for the OCR pass
+  var numPages = 0;
+  var splitAfter = {};      // { pageNumber: true } -- a cut after this page
+  var outputCards = [];
+  var idCounter = 0;
+
+  globalDateInput.addEventListener("input", function () { renderSegments(); });
+
+  function setGlobalStatus(msg, isErr) {
+    globalStatus.textContent = msg || "";
+    globalStatus.className = "status-line" + (isErr ? " err" : "");
+  }
+
+  function stripExt(name) {
+    return name.replace(/\.pdf$/i, "");
+  }
+
+  function range(a, b) {
+    var r = [];
+    for (var i = a; i <= b; i++) r.push(i);
+    return r;
+  }
+
+  var pageTexts = []; // pageTexts[pageNum] = extracted text, "" if none (scanned page)
+  var hasAnyText = false;
+
+  // ---------- doc type / name / date detection ----------
+  // Best-effort pattern matching against extracted text. Only works on
+  // pages that have a real text layer -- scanned pages have none, and
+  // detection silently yields nothing for them (caller falls back to a
+  // plain default name).
+
+  var MONTHS = {
+    jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
+    may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8,
+    sep: 9, sept: 9, september: 9, oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12
+  };
+
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  function cleanName(raw) {
+    return raw.replace(/\s+/g, " ").trim().replace(/[,.]+$/, "");
+  }
+
+  // Looks for a written date ("4th Aug 2026") or a DD/MM/YY(YY) date, and
+  // normalises to YYYY.MM.DD. Assumes DD/MM/YYYY (Australian convention).
+  function findDate(text) {
+    var m = text.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(?:day of\s+)?([A-Za-z]{3,9})\s+(\d{4})/i);
+    if (m) {
+      var mon = MONTHS[m[2].toLowerCase()];
+      if (mon) return m[3] + "." + pad2(mon) + "." + pad2(parseInt(m[1], 10));
+    }
+    var m2 = text.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
+    if (m2) {
+      var yr = m2[3].length === 2 ? "20" + m2[3] : m2[3];
+      return yr + "." + pad2(parseInt(m2[2], 10)) + "." + pad2(parseInt(m2[1], 10));
+    }
+    return null;
+  }
+
+  function normSpace(text) {
+    return (text || "").replace(/\s+/g, " ").trim();
+  }
+
+  function detectType(text) {
+    text = normSpace(text);
+    if (!text) return null;
+    // Require the literal title phrase for a Will, and the EPA phrase
+    // specifically paired with "short/long form" (its title wording) or a
+    // bare "Form 2/3" cover marker -- not just any mention of the phrase.
+    // Plainer keyword checks (e.g. a bare "Willmaker") false-trigger on
+    // boilerplate clauses deep in a Will that merely *refer* to an EPA or
+    // to "the Willmaker" as a defined term, without actually being one.
+    if (/last will and testament/i.test(text)) return "Will";
+    if (/enduring power of attorney[\s\S]{0,60}-\s*(?:short|long)\s*form/i.test(text) || /^\s*form\s+[23]\b/i.test(text)) return "EPA";
+    return null;
+  }
+
+  function detectName(text, type) {
+    text = normSpace(text);
+    if (!text) return null;
+    if (type === "Will") {
+      var m = text.match(/Last Will and testament of\s+([A-Z][A-Za-z'.\-]+(?:\s+[A-Z][A-Za-z'.\-]+){1,4})\s*(?:\(|,)/i);
+      return m ? cleanName(m[1]) : null;
+    }
+    if (type === "EPA") {
+      var m2 = text.match(/Enduring power of attorney[^\n]*-\s*(?:short|long)\s*form\s*-\s*([A-Z][A-Za-z'.\-]+(?:\s+[A-Za-z'.\-]+){1,4})/i);
+      if (m2) return cleanName(m2[1]);
+      var m3 = text.match(/Full name\s+([A-Z][A-Za-z'.\-]+(?:\s+[A-Za-z'.\-]+){1,4})/);
+      return m3 ? cleanName(m3[1]) : null;
+    }
+    return null;
+  }
+
+  function detectDocInfo(text) {
+    var type = detectType(text);
+    return { type: type, name: type ? detectName(text, type) : null, date: findDate(text) };
+  }
+
+  // ---------- OCR (on-demand, for scanned pages with no text layer) ----------
+
+  var ocrTexts = [];  // ocrTexts[pageNum] = text read from a top-of-page crop
+  var ocrRan = false;
+
+  async function renderPageCanvas(page, targetWidth) {
+    var viewport1 = page.getViewport({ scale: 1 });
+    var scale = targetWidth / viewport1.width;
+    var viewport = page.getViewport({ scale: scale });
+    var canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport: viewport }).promise;
+    return canvas;
+  }
+
+  function cropTop(canvas, fraction) {
+    var h = Math.max(1, Math.round(canvas.height * fraction));
+    var out = document.createElement("canvas");
+    out.width = canvas.width;
+    out.height = h;
+    out.getContext("2d").drawImage(canvas, 0, 0, canvas.width, h, 0, 0, canvas.width, h);
+    return out;
+  }
+
+  // ---------- file intake ----------
+
+  function renderQueuedFile() {
+    queuedFilesEl.innerHTML = "";
+    if (!currentFile) return;
+    var chip = document.createElement("div");
+    chip.className = "file-chip";
+    var label = document.createElement("span");
+    label.textContent = currentFile.name;
+    chip.appendChild(label);
+    var rm = document.createElement("button");
+    rm.type = "button";
+    rm.textContent = "\u00d7";
+    rm.title = "Remove and start over";
+    rm.addEventListener("click", resetAll);
+    chip.appendChild(rm);
+    queuedFilesEl.appendChild(chip);
+  }
+
+  function resetAll() {
+    currentFile = null;
+    originalBytes = null;
+    currentPdfDoc = null;
+    numPages = 0;
+    splitAfter = {};
+    outputCards = [];
+    idCounter = 0;
+    pageTexts = [];
+    hasAnyText = false;
+    ocrTexts = [];
+    ocrRan = false;
+    renderQueuedFile();
+    thumbGrid.innerHTML = "";
+    segmentRowsEl.innerHTML = "";
+    thumbSection.style.display = "none";
+    cardsEl.innerHTML = "";
+    allActions.hidden = true;
+    runBtn.disabled = true;
+    ocrBtn.disabled = false;
+    ocrBtn.textContent = "\u{1F50D} Scan with OCR (find Will/EPA boundaries & names)";
+    globalDateInput.value = "";
+    setGlobalStatus("");
+    dropzone.classList.remove("has-file");
+  }
+
+  function handleFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList).filter(function (f) {
+      return /\.pdf$/i.test(f.name);
+    });
+    if (!files.length) {
+      setGlobalStatus("Only .pdf files are supported.", true);
+      return;
+    }
+    resetAll();
+    loadFile(files[0]);
+  }
+
+  ["dragenter", "dragover"].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.add("drag-over");
+    });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.remove("drag-over");
+    });
+  });
+  dropzone.addEventListener("drop", function (e) {
+    if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+  });
+  dropzone.addEventListener("click", function (e) {
+    if (e.target === browseBtn) return;
+    fileInput.click();
+  });
+  browseBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    fileInput.click();
+  });
+  fileInput.addEventListener("change", function () {
+    handleFiles(fileInput.files);
+    fileInput.value = "";
+  });
+
+  // ---------- load + render previews ----------
+
+  async function loadFile(file) {
+    currentFile = file;
+    renderQueuedFile();
+    dropzone.classList.add("has-file");
+    setGlobalStatus("Reading " + file.name + "\u2026");
+
+    try {
+      originalBytes = await file.arrayBuffer();
+    } catch (err) {
+      setGlobalStatus("Couldn't read that file: " + (err && err.message ? err.message : err), true);
+      return;
+    }
+
+    var pdfDoc;
+    try {
+      pdfDoc = await pdfjsLib.getDocument({ data: originalBytes.slice(0) }).promise;
+    } catch (err) {
+      setGlobalStatus("Couldn't open that PDF: " + (err && err.message ? err.message : err), true);
+      return;
+    }
+
+    numPages = pdfDoc.numPages;
+    currentPdfDoc = pdfDoc;
+    thumbSection.style.display = "";
+    thumbGrid.innerHTML = "";
+    runBtn.disabled = false;
+
+    var pageMeta = []; // { num, total } parsed from footer text, if any
+
+    for (var i = 1; i <= numPages; i++) {
+      setGlobalStatus("Rendering previews (" + i + " / " + numPages + ")\u2026");
+      try {
+        var page = await pdfDoc.getPage(i);
+        appendThumb(i, page);
+
+        try {
+          var textContent = await page.getTextContent();
+          var text = textContent.items.map(function (it) { return it.str; }).join(" ");
+          pageTexts[i] = text;
+          if (text.trim()) hasAnyText = true;
+          var m = text.match(/Page\s+(\d+)\s+of\s+(\d+)/i);
+          pageMeta[i] = m ? { num: parseInt(m[1], 10), total: parseInt(m[2], 10) } : null;
+        } catch (e) {
+          pageTexts[i] = "";
+          pageMeta[i] = null;
+        }
+      } catch (err) {
+        setGlobalStatus("Couldn't render page " + i + ": " + (err && err.message ? err.message : err), true);
+      }
+    }
+
+    // Best-effort auto-suggestion: a "Page N of M" footer that resets to a
+    // new M (or restarts at 1) usually marks a fresh document starting.
+    var suggested = [];
+    for (var p = 1; p < numPages; p++) {
+      var cur = pageMeta[p], nxt = pageMeta[p + 1];
+      if (cur && nxt && (cur.total !== nxt.total || (cur.num === cur.total && nxt.num === 1))) {
+        splitAfter[p] = true;
+        suggested.push(p);
+      }
+    }
+
+    if (!globalDateInput.value) {
+      for (var dp = 1; dp <= numPages; dp++) {
+        var found = findDate(pageTexts[dp] || "");
+        if (found) { globalDateInput.value = found; break; }
+      }
+    }
+
+    renderSegments();
+
+    var msg = suggested.length
+      ? "Suggested a split after page " + suggested.join(", ") + " based on page numbering \u2014 adjust if needed."
+      : numPages + " pages loaded. Click \u2702 on a page to mark where a document ends.";
+    if (!hasAnyText) {
+      msg += " No text layer found in this PDF (likely a scan), so type and name couldn't be auto-read from text \u2014 try the OCR scan below, or name each file manually.";
+    }
+    setGlobalStatus(msg);
+  }
+
+  async function appendThumb(pageNum, page) {
+    var wrap = document.createElement("div");
+    wrap.className = "thumb-wrap";
+    wrap.dataset.page = pageNum;
+
+    var card = document.createElement("div");
+    card.className = "thumb-card";
+    var canvas = document.createElement("canvas");
+    card.appendChild(canvas);
+    wrap.appendChild(card);
+
+    var numEl = document.createElement("div");
+    numEl.className = "thumb-num";
+    numEl.textContent = pageNum;
+    wrap.appendChild(numEl);
+
+    if (pageNum < numPages) {
+      var toggle = document.createElement("div");
+      toggle.className = "split-toggle";
+      toggle.textContent = "\u2702";
+      toggle.title = "Mark: document ends here";
+      toggle.addEventListener("click", function () {
+        if (splitAfter[pageNum]) delete splitAfter[pageNum];
+        else splitAfter[pageNum] = true;
+        toggle.classList.toggle("active");
+        wrap.classList.toggle("split-after");
+        renderSegments();
+      });
+      wrap.appendChild(toggle);
+    }
+
+    thumbGrid.appendChild(wrap);
+
+    var viewport1 = page.getViewport({ scale: 1 });
+    var dpr = window.devicePixelRatio || 1;
+    var scale = (THUMB_WIDTH * dpr) / viewport1.width;
+    var viewport = page.getViewport({ scale: scale });
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    canvas.style.width = THUMB_WIDTH + "px";
+    canvas.style.height = (THUMB_WIDTH * viewport.height / viewport.width) + "px";
+    var ctx = canvas.getContext("2d");
+    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+    if (splitAfter[pageNum]) {
+      wrap.classList.add("split-after");
+      wrap.querySelector(".split-toggle").classList.add("active");
+    }
+  }
+
+  // ---------- segments ----------
+
+  function computeSegments() {
+    var segs = [];
+    var start = 1;
+    for (var p = 1; p < numPages; p++) {
+      if (splitAfter[p]) {
+        segs.push({ start: start, end: p });
+        start = p + 1;
+      }
+    }
+    segs.push({ start: start, end: numPages });
+    return segs;
+  }
+
+  var segmentInputs = []; // kept in sync with computeSegments() order
+
+  function renderSegments() {
+    var segs = computeSegments();
+    segmentRowsEl.innerHTML = "";
+    segmentInputs = [];
+
+    var baseName = currentFile ? stripExt(currentFile.name) : "document";
+
+    segs.forEach(function (seg, idx) {
+      var item = document.createElement("div");
+      item.className = "segment-item";
+
+      var row = document.createElement("div");
+      row.className = "segment-row";
+
+      var rangeEl = document.createElement("span");
+      rangeEl.className = "seg-range";
+      var count = seg.end - seg.start + 1;
+      rangeEl.textContent = "pp. " + seg.start + "\u2013" + seg.end + " (" + count + "p)";
+      row.appendChild(rangeEl);
+
+      // Look at the first couple of pages of this segment -- that's where
+      // a title clause ("Last Will and testament of...") or form header
+      // ("Enduring power of attorney - short form - ...") normally sits.
+      // OCR text (if a scan was run) wins over the PDF's own text layer,
+      // since OCR was specifically requested to identify this segment.
+      var segText =
+        (ocrTexts[seg.start] || pageTexts[seg.start] || "") + " " +
+        (ocrTexts[seg.start + 1] || pageTexts[seg.start + 1] || "");
+      var type = detectType(segText);
+      var name = type ? detectName(segText, type) : null;
+      var dateVal = globalDateInput.value.trim();
+      var datePart = dateVal ? " (" + dateVal + ")" : "";
+
+      var usedOcr = !!(ocrTexts[seg.start] || ocrTexts[seg.start + 1]);
+      var source = usedOcr ? "ocr" : "text";
+
+      var fallback = segs.length === 1 ? baseName : (baseName + " - part " + (idx + 1));
+      var guessed, hintText, hintDim;
+      if (type && name) {
+        guessed = type + " - " + name + datePart;
+        hintText = (usedOcr ? "OCR read: " : "auto-read: ") + type + " \u00b7 " + name + (dateVal ? "" : " \u2014 add a date above");
+        hintDim = false;
+      } else if (type) {
+        guessed = type + " - " + baseName + datePart;
+        hintText = (usedOcr ? "OCR read: " : "auto-read: ") + type + " \u2014 name not found, check";
+        hintDim = false;
+      } else {
+        guessed = fallback;
+        hintText = (pageTexts[seg.start] || ocrTexts[seg.start])
+          ? "couldn't identify the document type \u2014 name it manually, or try the OCR scan"
+          : "no text layer on this page \u2014 name it manually, or try the OCR scan";
+        hintDim = true;
+      }
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.value = guessed;
+      input.placeholder = "e.g. Will - Jane Citizen (2026.08.04)";
+      row.appendChild(input);
+
+      var ext = document.createElement("span");
+      ext.className = "seg-ext";
+      ext.textContent = ".pdf";
+      row.appendChild(ext);
+
+      item.appendChild(row);
+
+      var hint = document.createElement("div");
+      hint.className = "seg-hint" + (hintDim ? " dim" : "");
+      hint.textContent = hintText;
+      item.appendChild(hint);
+
+      segmentRowsEl.appendChild(item);
+      segmentInputs.push({ start: seg.start, end: seg.end, input: input });
+    });
+  }
+
+  // ---------- output cards ----------
+
+  function buildMeta(seg, byteLength) {
+    var wrap = document.createElement("div");
+    wrap.className = "meta";
+    function add(label, value) {
+      var s = document.createElement("span");
+      var l = document.createElement("span");
+      l.className = "meta-label";
+      l.textContent = label + " ";
+      s.appendChild(l);
+      s.appendChild(document.createTextNode(value));
+      wrap.appendChild(s);
+    }
+    var count = seg.end - seg.start + 1;
+    add("Pages", count + " (" + seg.start + "\u2013" + seg.end + ")");
+    add("Size", (byteLength / 1024).toFixed(0) + " KB");
+    return wrap;
+  }
+
+  function addOutputCard(seg, blob, suggestedBaseName) {
+    idCounter++;
+    var id = idCounter;
+
+    var cardEl = document.createElement("div");
+    cardEl.className = "card";
+
+    var tab = document.createElement("div");
+    tab.className = "tab";
+    tab.textContent = "SPLIT";
+    cardEl.appendChild(tab);
+
+    var body = document.createElement("div");
+    body.className = "card-body";
+
+    var topRow = document.createElement("div");
+    topRow.className = "card-top-row";
+    topRow.appendChild(buildMeta(seg, blob.size));
+
+    var removeBtn = document.createElement("button");
+    removeBtn.className = "remove-btn";
+    removeBtn.title = "Remove";
+    removeBtn.textContent = "\u00d7";
+    removeBtn.addEventListener("click", function () {
+      cardEl.remove();
+      outputCards = outputCards.filter(function (c) { return c.id !== id; });
+      toggleAllActions();
+    });
+    topRow.appendChild(removeBtn);
+    body.appendChild(topRow);
+
+    var summary = document.createElement("div");
+    summary.className = "swap-summary";
+    var line = document.createElement("span");
+    line.className = "pair-line";
+    line.textContent = "Pages " + seg.start + "\u2013" + seg.end + " from " + currentFile.name;
+    summary.appendChild(line);
+    body.appendChild(summary);
+
+    var label = document.createElement("label");
+    label.className = "field-label";
+    label.textContent = "New file name";
+    body.appendChild(label);
+
+    var row = document.createElement("div");
+    row.className = "filename-row";
+    var input = document.createElement("input");
+    input.type = "text";
+    input.value = suggestedBaseName;
+    var ext = document.createElement("span");
+    ext.className = "ext";
+    ext.textContent = ".pdf";
+    row.appendChild(input);
+    row.appendChild(ext);
+    body.appendChild(row);
+
+    var actions = document.createElement("div");
+    actions.className = "card-actions";
+    actions.style.marginTop = "16px";
+
+    var dlBtn = document.createElement("button");
+    dlBtn.className = "download-btn";
+    dlBtn.textContent = "Download";
+
+    var stamp = document.createElement("span");
+    stamp.className = "stamp";
+    stamp.textContent = "SAVED";
+
+    actions.appendChild(dlBtn);
+    actions.appendChild(stamp);
+    body.appendChild(actions);
+
+    cardEl.appendChild(body);
+    cardsEl.appendChild(cardEl);
+
+    var card = {
+      id: id,
+      blob: blob,
+      filenameInput: input,
+      downloadBtn: dlBtn,
+      stamp: stamp
+    };
+    outputCards.push(card);
+
+    dlBtn.addEventListener("click", function () { triggerDownload(card); });
+
+    toggleAllActions();
+  }
+
+  function finalFilename(card) {
+    var raw = card.filenameInput.value.trim().replace(/,/g, "") || "split-document";
+    return raw + ".pdf";
+  }
+
+  function triggerDownload(card) {
+    var url = URL.createObjectURL(card.blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = finalFilename(card);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    card.stamp.classList.add("show");
+  }
+
+  function toggleAllActions() {
+    allActions.hidden = outputCards.length < 2;
+  }
+
+  downloadAllBtn.addEventListener("click", function () {
+    outputCards.forEach(function (card, i) {
+      setTimeout(function () { triggerDownload(card); }, i * 300);
+    });
+  });
+
+  // ---------- OCR scan ----------
+
+  ocrBtn.addEventListener("click", async function () {
+    if (!currentPdfDoc || !numPages) return;
+
+    ocrBtn.disabled = true;
+    runBtn.disabled = true;
+    var worker = null;
+
+    try {
+      setGlobalStatus("Starting OCR engine (downloading language data on first use)\u2026");
+      worker = await Tesseract.createWorker("eng");
+
+      var runningType = null;
+      var boundariesFound = [];
+      var pageFailures = 0;
+      var lastError = null;
+
+      for (var i = 1; i <= numPages; i++) {
+        setGlobalStatus("OCR scanning page " + i + " / " + numPages + "\u2026");
+        try {
+          var page = await currentPdfDoc.getPage(i);
+          var fullCanvas = await renderPageCanvas(page, 900);
+          var cropCanvas = cropTop(fullCanvas, 0.45);
+          var result = await worker.recognize(cropCanvas);
+          var text = (result && result.data && result.data.text) || "";
+          ocrTexts[i] = text;
+
+          var type = detectType(text);
+          if (type && type !== runningType) {
+            if (i > 1) {
+              splitAfter[i - 1] = true;
+              boundariesFound.push(i - 1);
+              var prevWrap = thumbGrid.querySelector('[data-page="' + (i - 1) + '"]');
+              if (prevWrap) {
+                prevWrap.classList.add("split-after");
+                var prevToggle = prevWrap.querySelector(".split-toggle");
+                if (prevToggle) prevToggle.classList.add("active");
+              }
+            }
+            runningType = type;
+          }
+        } catch (pageErr) {
+          ocrTexts[i] = ocrTexts[i] || "";
+          pageFailures++;
+          lastError = pageErr;
+          // If OCR can't even read the very first page, the engine itself
+          // is broken (almost always its language-data download getting
+          // blocked) -- stop immediately rather than grinding through
+          // every remaining page with the same failure.
+          if (i <= 2 && pageFailures >= i) {
+            throw pageErr;
+          }
+        }
+      }
+
+      renderSegments();
+
+      if (pageFailures > 0) {
+        setGlobalStatus(
+          "OCR scan finished, but " + pageFailures + " of " + numPages + " page" + (pageFailures === 1 ? "" : "s") +
+          " couldn't be read \u2014 results below may be incomplete. Check the names, or mark splits manually."
+        );
+      } else {
+        setGlobalStatus(
+          boundariesFound.length
+            ? "OCR scan complete \u2014 found " + (boundariesFound.length + 1) + " documents (split after page " + boundariesFound.join(", ") + "). Check the names below."
+            : "OCR scan complete \u2014 didn't find a Will/EPA boundary; treated as one document. Check the name below, or mark a split manually."
+        );
+      }
+    } catch (err) {
+      var reason = err && err.message ? err.message : String(err);
+      var isNetworkish = /network|fetch|failed to load|404|403|cors/i.test(reason);
+      setGlobalStatus(
+        "OCR couldn't run: " + reason +
+        (isNetworkish
+          ? " \u2014 the OCR engine loads its language data from a CDN on first use, so this usually means that request was blocked (corporate firewall, ad-blocker, or offline). Try a different network/browser, or name files manually below."
+          : ""),
+        true
+      );
+    }
+
+    if (worker) {
+      try { await worker.terminate(); } catch (e) { /* ignore */ }
+    }
+    ocrBtn.disabled = false;
+    ocrBtn.textContent = "\u{1F50D} Re-scan with OCR";
+    runBtn.disabled = false;
+  });
+
+  // ---------- run ----------
+
+  runBtn.addEventListener("click", async function () {
+    if (!originalBytes || !segmentInputs.length) return;
+
+    runBtn.disabled = true;
+    cardsEl.innerHTML = "";
+    outputCards = [];
+    toggleAllActions();
+
+    var segsToRun = segmentInputs.map(function (s) {
+      return { start: s.start, end: s.end, name: s.input.value.trim() };
+    });
+
+    setGlobalStatus("Splitting into " + segsToRun.length + " document" + (segsToRun.length === 1 ? "" : "s") + "\u2026");
+
+    try {
+      var srcDoc = await PDFLib.PDFDocument.load(originalBytes.slice(0));
+
+      for (var i = 0; i < segsToRun.length; i++) {
+        var seg = segsToRun[i];
+        var outDoc = await PDFLib.PDFDocument.create();
+        var indices = range(seg.start - 1, seg.end - 1);
+        var copied = await outDoc.copyPages(srcDoc, indices);
+        copied.forEach(function (p) { outDoc.addPage(p); });
+        var bytes = await outDoc.save();
+        var blob = new Blob([bytes], { type: "application/pdf" });
+        addOutputCard(seg, blob, seg.name || (stripExt(currentFile.name) + " - part " + (i + 1)));
+      }
+      setGlobalStatus("Done \u2014 " + segsToRun.length + " document" + (segsToRun.length === 1 ? "" : "s") + " ready below.");
+    } catch (err) {
+      setGlobalStatus("Couldn't split the PDF: " + (err && err.message ? err.message : err), true);
+    }
+
+    runBtn.disabled = false;
+  });
+})();
+</script>
+</body>
+</html>
