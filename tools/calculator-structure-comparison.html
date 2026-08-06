@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Australian CGT &amp; Investment Income — Structure Comparison</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: #061828;
+  color: #e8eaf0;
+  min-height: 100vh;
+  padding: 0 0 3rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.page-header { padding: 2rem 1.75rem 0; }
+h1 { font-size: 20px; font-weight: 600; color: #e8eaf0; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #506070; margin-bottom: 1.5rem; }
+
+/* ── Tabs ── */
+.tab-bar {
+  display: flex; gap: 0;
+  border-bottom: 1px solid #173060;
+  margin: 0 1.75rem 2rem;
+}
+.tab-btn {
+  padding: 10px 20px; font-size: 13px; font-weight: 500;
+  color: #506070; background: none; border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer; transition: color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: #b0bcd0; }
+.tab-btn.active { color: #e8eaf0; border-bottom-color: #F6D02F; }
+
+/* ── Tab panels ── */
+.tab-panel { display: none; padding: 0 1.75rem; }
+.tab-panel.active { display: block; }
+
+/* ── Shared components ── */
+.st { font-size: 11px; font-weight: 600; color: #506070; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+.grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 1.5rem; }
+.grid2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 1.5rem; }
+.f { display: flex; flex-direction: column; gap: 5px; }
+.f label { font-size: 12px; color: #8a9ab0; }
+.f input, .f select {
+  height: 36px; border-radius: 7px;
+  border: 1px solid #1e3d6e;
+  background: #0e2040; color: #e8eaf0;
+  padding: 0 11px; font-size: 14px; width: 100%;
+  transition: border-color .15s;
+  appearance: none; -webkit-appearance: none;
+}
+.f input:focus, .f select:focus { outline: none; border-color: #F6D02F; }
+hr { border: none; border-top: 1px solid #173060; margin: 1.5rem 0; }
+
+.gs { background: #0e2040; border-radius: 8px; padding: 10px 13px; }
+.gs-l { font-size: 10px; color: #506070; text-transform: uppercase; letter-spacing:.05em; margin-bottom: 4px; }
+.gs-v { font-size: 16px; font-weight: 500; font-family: 'SF Mono','Fira Code',monospace; color: #d5dee8; }
+.gs-v.blue   { color: #F6D02F; }
+.gs-v.orange { color: #fb923c; }
+.gs-v.green  { color: #4ade80; }
+.gs-v.red    { color: #DB0007; }
+
+.gain-strip5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 1.5rem; }
+.gain-strip4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 1.5rem; }
+.gain-strip3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.5rem; }
+
+.comp-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  padding: 10px 14px; text-align: right;
+  font-size: 11px; font-weight: 600; color: #506070;
+  text-transform: uppercase; letter-spacing: .06em;
+  border-bottom: 1px solid #173060; white-space: nowrap;
+}
+thead th:first-child { text-align: left; }
+tbody tr { border-bottom: 1px solid #161626; }
+tbody tr:last-child { border-bottom: none; }
+tbody td { padding: 10px 14px; text-align: right; color: #ccd5e0; font-family: 'SF Mono','Fira Code',monospace; font-size: 13px; }
+tbody td:first-child { text-align: left; font-family: inherit; color: #b0bcd0; font-size: 12px; }
+tbody tr.total-row td { font-weight: 600; color: #e8eaf0; border-top: 1px solid #1e3d6e; padding-top: 12px; }
+tbody tr.total-row td:first-child { color: #e8eaf0; font-size: 13px; }
+
+.pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: inherit; }
+.pill.company { background: rgba(219,0,7,.15); color: #DB0007; }
+.pill.ind     { background: rgba(74,222,128,.15);  color: #4ade80; }
+.pill.neutral { background: rgba(246,208,47,.12); color: #F6D02F; }
+.pill.trust   { background: rgba(167,139,250,.15); color: #a78bfa; }
+
+.winner-grid5 { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.5rem; }
+.winner-card { border-radius: 9px; padding: 12px 14px; border: 1px solid transparent; }
+.winner-card.ind-wins  { background: rgba(74,222,128,.08);  border-color: rgba(74,222,128,.25); }
+.winner-card.comp-wins { background: rgba(219,0,7,.08); border-color: rgba(219,0,7,.25); }
+.winner-card.tie       { background: rgba(246,208,47,.08); border-color: rgba(246,208,47,.2); }
+.wc-label { font-size: 11px; color: #607080; margin-bottom: 5px; }
+.wc-who   { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.wc-who.ind  { color: #4ade80; }
+.wc-who.comp { color: #DB0007; }
+.wc-who.tie  { color: #F6D02F; }
+.wc-save  { font-size: 12px; color: #7a90a8; }
+
+.chart-card { background: #0C2340; border: 1px solid #173060; border-radius: 12px; padding: 1.5rem 1.75rem 1.25rem; margin-bottom: 1.25rem; }
+.chart-title { font-size: 11px; font-weight: 600; color: #506070; text-transform: uppercase; letter-spacing:.07em; margin-bottom: 1rem; }
+canvas { width: 100% !important; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 1rem; }
+.li { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #7a90a8; }
+.ll { width: 24px; height: 3px; border-radius: 2px; }
+
+.note { font-size: 11px; color: #405060; line-height: 1.7; border-top: 1px solid #173060; padding-top: 1rem; }
+.note-box { font-size: 11px; line-height: 1.7; border-radius: 8px; padding: .75rem 1rem; margin-top: .75rem; }
+.note-box.amber { background: rgba(251,146,60,.07); border: 1px solid rgba(251,146,60,.25); color: #F6D02F; }
+.note-box.blue  { background: rgba(246,208,47,.07); border: 1px solid rgba(246,208,47,.25); color: #8899cc; }
+
+@media (max-width: 640px) {
+  .grid3,.grid2 { grid-template-columns: 1fr 1fr; }
+  .gain-strip5,.gain-strip4 { grid-template-columns: 1fr 1fr; }
+  .winner-grid5 { grid-template-columns: 1fr 1fr; }
+  .tab-btn { padding: 10px 12px; font-size: 12px; }
+}
+/* ── Acknowledgement overlay ── */
+#ack-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(4,12,28,.92);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+}
+#ack-box {
+  background: #0C2340;
+  border: 1px solid #1e3d6e;
+  border-radius: 14px;
+  max-width: 600px; width: 100%;
+  padding: 2.25rem 2.25rem 1.75rem;
+}
+#ack-box h2 {
+  font-size: 16px; font-weight: 600; color: #e8eaf0;
+  margin-bottom: 1rem;
+}
+#ack-box p {
+  font-size: 13px; color: #7a90a8; line-height: 1.75;
+  margin-bottom: 1rem;
+}
+#ack-box p strong { color: #c0ccd8; }
+#ack-box .ack-divider {
+  border: none; border-top: 1px solid #173060; margin: 1.25rem 0;
+}
+#ack-btn {
+  display: block; width: 100%;
+  padding: 12px 20px;
+  background: #F6D02F; color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; text-align: center;
+  transition: background .15s;
+  margin-top: 1.25rem;
+}
+#ack-btn:hover { background: #e0bc2a; }
+#ack-logo {
+  font-size: 11px; color: #405060; text-align: center;
+  margin-top: 1rem; letter-spacing: .04em; text-transform: uppercase;
+}
+
+/* ── Cell value tooltips ── */
+.td-tip { cursor: help; border-bottom: 1px dotted rgba(246,208,47,.5); }
+#js-tooltip {
+  position: fixed; z-index: 9999; pointer-events: none;
+  background: #0C2340; border: 1px solid #1e3d6e;
+  color: #ccd5e0; font-size: 11px; font-weight: 400;
+  line-height: 1.6; padding: 8px 12px; border-radius: 7px;
+  white-space: pre-line; width: 290px; text-align: left;
+  font-family: 'SF Mono','Fira Code',monospace;
+  display: none; box-shadow: 0 4px 20px rgba(0,0,0,.5);
+}
+</style>
+</head>
+<body>
+
+<div id="js-tooltip"></div>
+<!-- ── Acknowledgement overlay ── -->
+<div id="ack-overlay">
+  <div id="ack-box">
+    <h2>Important Disclaimer — Please Read Before Proceeding</h2>
+    <p>
+      This tool is a <strong>calculator only</strong>. It projects estimated capital gains tax
+      outcomes and investment income figures based on user-defined assumptions — such as CPI
+      inflation rates, annual growth rates, holding periods and marginal tax rates.
+    </p>
+    <p>
+      <strong>This calculator does not:</strong><br>
+      · Recommend or endorse any particular investment structure, financial product or tax strategy<br>
+      · Account for your individual financial circumstances, objectives or risk profile<br>
+      · Constitute financial, taxation, accounting or legal advice of any kind
+    </p>
+    <p>
+      All outputs are illustrative projections based on the inputs and assumptions you provide.
+      Tax laws, rates and thresholds change over time and may differ from those applied here.
+      Actual outcomes will vary.
+    </p>
+    <hr class="ack-divider">
+    <p>
+      Before making any financial, investment or tax-related decision, you should obtain
+      independent advice from a qualified <strong>financial adviser</strong>,
+      <strong>accountant</strong> and/or <strong>solicitor</strong> who can assess your
+      specific circumstances.
+    </p>
+    <button id="ack-btn" onclick="dismissAck()">
+      I understand and acknowledge this is a calculator only and does not constitute financial, taxation or legal advice
+    </button>
+    <p id="ack-logo">Australian Tax Structure Calculator · 2025–26 rates</p>
+  </div>
+</div>
+
+<div class="page-header">
+  <h1>Australian Tax — Structure Comparison</h1>
+  <p class="subtitle">Compare CGT and investment income outcomes across company, trust, and individual structures · 2025–26 tax rates</p>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('cgt')">Capital Gains Tax</button>
+  <button class="tab-btn" onclick="switchTab('income')">Investment Income</button>
+  <button class="tab-btn" onclick="switchTab('historical')">Historical CPI</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TAB 1 — CGT
+═══════════════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-cgt">
+
+  <div class="st">Investment parameters</div>
+  <div class="grid3">
+    <div class="f"><label>Investment amount ($)</label><input type="number" id="invest" value="1000000" oninput="goCGT()"></div>
+    <div class="f"><label>Annual CPI rate (% p.a.)</label><input type="number" id="cpi" value="3.0" step="0.1" min="0" max="30" oninput="goCGT()"></div>
+    <div class="f"><label>Holding period (years)</label><input type="number" id="yrs" value="10" step="1" min="1" max="50" oninput="goCGT()"></div>
+    <div class="f"><label>Annual growth rate (% p.a.)</label><input type="number" id="gr" value="7.0" step="0.1" min="0" max="100" oninput="goCGT()"></div>
+    <div class="f"><label style="visibility:hidden">x</label>
+      <div style="height:36px;display:flex;align-items:center;font-size:12px;color:#555;" id="scen"></div>
+    </div>
+  </div>
+
+  <hr>
+  <div class="st">Gain summary</div>
+  <div class="gain-strip5">
+    <div class="gs"><div class="gs-l">Purchase price</div><div class="gs-v" id="g-pp">—</div></div>
+    <div class="gs"><div class="gs-l">Sale price</div><div class="gs-v" id="g-sale">—</div></div>
+    <div class="gs"><div class="gs-l">Nominal gain (company taxed on this)</div><div class="gs-v orange" id="g-nom">—</div></div>
+    <div class="gs"><div class="gs-l">CPI-indexed cost base</div><div class="gs-v" id="g-icb">—</div></div>
+    <div class="gs"><div class="gs-l">Real gain (individual taxed on this)</div><div class="gs-v blue" id="g-real">—</div></div>
+  </div>
+
+  <hr>
+  <div class="st">CGT comparison — company vs individual</div>
+  <div class="comp-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left">Taxpayer</th>
+          <th>Other income</th>
+          <th>Taxable gain</th>
+          <th>Tax on gain ($)</th>
+          <th>Effective rate on gain</th>
+          <th>Net after-tax gain</th>
+          <th>vs Company (net proceeds)</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <hr>
+  <div class="st">Discretionary Trust — split distribution between two beneficiaries</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1rem">
+    <div class="f">
+      <label>Beneficiary 1 — other income</label>
+      <select id="trust-b1" onchange="goCGT()">
+        <option value="0">$0 other income</option>
+        <option value="50000">$50K other income</option>
+        <option value="100000">$100K other income</option>
+        <option value="150000">$150K other income</option>
+        <option value="200000">$200K other income</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>Beneficiary 1 — share of gain (%)</label>
+      <input type="number" id="trust-split" value="50" min="0" max="100" step="1" oninput="updateSplit('trust-split','trust-split2');goCGT()">
+    </div>
+    <div class="f">
+      <label>Beneficiary 2 — share of gain (%)</label>
+      <input type="number" id="trust-split2" value="50" readonly style="opacity:.65;cursor:not-allowed;">
+    </div>
+    <div class="f">
+      <label>Beneficiary 2 — other income</label>
+      <select id="trust-b2" onchange="goCGT()">
+        <option value="0">$0 other income</option>
+        <option value="50000" selected>$50K other income</option>
+        <option value="100000">$100K other income</option>
+        <option value="150000">$150K other income</option>
+        <option value="200000">$200K other income</option>
+      </select>
+    </div>
+  </div>
+  <div class="comp-wrap">
+    <table id="trust-table-cgt">
+      <thead>
+        <tr>
+          <th style="text-align:left">Beneficiary</th>
+          <th>Other income</th>
+          <th>Share of gain</th>
+          <th>Taxable gain (indexed)</th>
+          <th>Tax on gain</th>
+          <th>Effective rate on gain</th>
+          <th>Net after-tax gain</th>
+          <th>vs Company</th>
+        </tr>
+      </thead>
+      <tbody id="trust-tbody-cgt"></tbody>
+    </table>
+  </div>
+
+  <hr>
+  <div class="st">Which structure pays less CGT?</div>
+  <div class="winner-grid5" id="winner-grid"></div>
+
+  <p class="note">
+    <strong>Assumptions &amp; methodology:</strong>
+    The comparison is the <strong>net after-tax gain</strong> — what the investor retains after CGT (nominal gain minus tax paid).
+    <strong>Company:</strong> pays 30% tax on the full nominal gain; no CGT discount applies. This assumes the company has no prior-year losses or amounts previously taxed under the 50% CGT discount that would otherwise shelter or reduce the gain — in other words, the full nominal gain is assessed at the corporate rate.
+    <strong>Individual:</strong> pays marginal tax (subject to a 30% floor) on the CPI-indexed real gain only.
+    Individual tax uses 2025–26 Australian resident marginal rates (0%, 16%, 30%, 37%, 45%) plus 2% Medicare levy. The real gain is stacked on top of other income to determine the marginal rate for each dollar. The Low Income Tax Offset (LITO) is included: maximum $700 for incomes up to $37,500, reducing at 5 cents per dollar between $37,500 and $45,000 (to $325), then at 1.5 cents per dollar between $45,000 and $66,667, reaching zero above $66,667.
+  </p>
+  <div class="note-box amber">
+    <strong>⚑ 30% minimum tax on indexed gains — applies to all individuals:</strong>
+    A 30% minimum tax rate applies to the real (CPI-indexed) capital gain for every individual, regardless of their marginal rate.
+    Where the floor is the binding rate (typically $0 and $50K other income), the tax figure is marked <strong style="color:#fb923c">⚑ 30% floor</strong>.
+    Where the marginal rate already exceeds 30% (typically $100K, $150K and $200K other income), the higher rate applies and is shown as <strong style="color:#888">↑ marginal rate</strong>.
+    In both cases the 30% floor is the baseline; higher income simply attracts additional tax on top.
+  </div>
+  <div class="note-box blue" style="margin-top:.75rem;">
+    ℹ️ Under the <em>Treasury Laws Amendment (Tax Reform No. 1) Act 2026</em>, the 50% CGT discount for individuals, trusts and partnerships will be replaced with cost-base indexation and a 30% minimum tax from 1 July 2027. The methodology used in this tool reflects those incoming rules. This calculator is for general illustration only and does not constitute tax advice.
+  </div>
+
+</div><!-- /tab-cgt -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     TAB 2 — INVESTMENT INCOME
+═══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-income">
+
+  <div class="st">Investment income parameters</div>
+  <div class="grid3">
+    <div class="f"><label>Gross investment income ($)</label><input type="number" id="ii-income" value="100000" oninput="goIncome()"></div>
+    <div class="f"><label>Company tax rate (%)</label><input type="number" id="ii-corprate" value="30" step="0.5" min="0" max="50" oninput="goIncome()"></div>
+    <div class="f"><label style="visibility:hidden">x</label>
+      <div style="height:36px;display:flex;align-items:center;font-size:12px;color:#555;" id="ii-scen"></div>
+    </div>
+  </div>
+
+  <hr>
+  <div class="st">Summary</div>
+  <div class="gain-strip3">
+    <div class="gs"><div class="gs-l">Gross income</div><div class="gs-v" id="ii-g-gross">—</div></div>
+    <div class="gs"><div class="gs-l">Company tax @ rate</div><div class="gs-v orange" id="ii-g-ctax">—</div></div>
+    <div class="gs"><div class="gs-l">Net retained in company</div><div class="gs-v green" id="ii-g-cnet">—</div></div>
+  </div>
+
+  <hr>
+  <div class="st">Tax comparison — individual beneficiaries vs company</div>
+  <div class="comp-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left">Structure / Recipient</th>
+          <th>Other income</th>
+          <th>Gross income assessed</th>
+          <th>Net tax payable</th>
+          <th>Net investment income after tax</th>
+          <th>vs Company</th>
+        </tr>
+      </thead>
+      <tbody id="ii-tbody"></tbody>
+    </table>
+  </div>
+
+  <hr>
+  <div class="st">Discretionary Trust — split distribution between two beneficiaries</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1rem">
+    <div class="f">
+      <label>Beneficiary 1 — other income</label>
+      <select id="ii-trust-b1" onchange="goIncome()">
+        <option value="0">$0 other income</option>
+        <option value="50000">$50K other income</option>
+        <option value="100000">$100K other income</option>
+        <option value="150000">$150K other income</option>
+        <option value="200000">$200K other income</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>Beneficiary 1 — share of income (%)</label>
+      <input type="number" id="ii-trust-split" value="50" min="0" max="100" step="1" oninput="updateSplit('ii-trust-split','ii-trust-split2');goIncome()">
+    </div>
+    <div class="f">
+      <label>Beneficiary 2 — share of income (%)</label>
+      <input type="number" id="ii-trust-split2" value="50" readonly style="opacity:.65;cursor:not-allowed;">
+    </div>
+    <div class="f">
+      <label>Beneficiary 2 — other income</label>
+      <select id="ii-trust-b2" onchange="goIncome()">
+        <option value="0">$0 other income</option>
+        <option value="50000" selected>$50K other income</option>
+        <option value="100000">$100K other income</option>
+        <option value="150000">$150K other income</option>
+        <option value="200000">$200K other income</option>
+      </select>
+    </div>
+  </div>
+  <div class="comp-wrap">
+    <table id="trust-table-ii">
+      <thead>
+        <tr>
+          <th style="text-align:left">Beneficiary</th>
+          <th>Other income</th>
+          <th>Share of income</th>
+          <th>Gross income assessed</th>
+          <th>Net tax payable</th>
+          <th>Net investment income after tax</th>
+          <th>vs Company</th>
+        </tr>
+      </thead>
+      <tbody id="trust-tbody-ii"></tbody>
+    </table>
+  </div>
+
+  <hr>
+  <div class="st">Which structure retains more after tax?</div>
+  <div class="winner-grid5" id="ii-winner-grid"></div>
+
+  <hr>
+  <div class="st">Reinvestment growth — compounding the after-tax income over time</div>
+  <div class="grid2" style="margin-bottom:1rem;">
+    <div class="f"><label>Annual return rate on reinvested income (% p.a.)</label><input type="number" id="ii-retrate" value="7.0" step="0.1" min="0" max="50" oninput="goIncome()"></div>
+    <div class="f"><label>Number of years reinvested</label><input type="number" id="ii-retyrs" value="10" step="1" min="1" max="50" oninput="goIncome()"></div>
+  </div>
+  <div class="legend">
+    <div class="li"><div class="ll" style="background:#DB0007"></div>Company — net after tax reinvested</div>
+    <div class="li"><div class="ll" style="background:#4ade80"></div>Individual beneficiary — $0 other income</div>
+    <div class="li"><div class="ll" style="background:#F6D02F"></div>Individual beneficiary — $50K other income</div>
+    <div class="li"><div class="ll" style="background:#fb923c"></div>Individual beneficiary — $100K other income</div>
+    <div class="li"><div class="ll" style="background:#f472b6"></div>Individual beneficiary — $150K other income</div>
+    <div class="li"><div class="ll" style="background:#a78bfa"></div>Individual beneficiary — $200K other income</div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title" id="ii-ctitle">Value of reinvested after-tax income over time</div>
+    <canvas id="ch-income" height="380"></canvas>
+  </div>
+
+  <p class="note">
+    <strong>Individual beneficiary assumptions:</strong>
+    A discretionary trust distributes its gross investment income directly to individual beneficiaries. The trust itself pays no tax — income is assessed in the hands of each beneficiary at their marginal rate, stacked on top of any other income they earn.
+    <strong>Company assumptions:</strong>
+    The company pays corporate tax at the nominated rate on gross income. This table reflects the tax position at the entity level — the net amount retained by the company after tax, available for reinvestment. Any subsequent dividend distribution to shareholders would attract additional personal tax (offset by franking credits) and is not modelled here.
+    <strong>Reinvestment chart:</strong>
+    Shows the compounded value of the after-tax income if reinvested at the nominated annual return rate over the selected number of years. The starting point for each line is the net investment income after tax. This illustrates the long-run advantage of a lower initial tax burden, as a higher after-tax amount compounds more quickly over time.
+    Individual tax uses 2025–26 Australian resident marginal rates (0%, 16%, 30%, 37%, 45%) plus 2% Medicare levy. The Low Income Tax Offset (LITO) is included: maximum $700 for incomes up to $37,500, reducing at 5 cents per dollar between $37,500 and $45,000 (to $325), then at 1.5 cents per dollar between $45,000 and $66,667, reaching zero above $66,667. Note that LITO is a non-refundable offset — it can reduce income tax to zero but cannot generate a refund, and it does not reduce the Medicare levy.
+  </p>
+  <div class="note-box blue" style="margin-top:.75rem;">
+    ℹ️ This comparison does not account for trust distribution minutes, the trustee's discretion over which beneficiary receives income, Division 7A implications of retained company profits, or the additional 30% minimum tax on trust distributions from discretionary trusts announced for 2028–29. This is a general illustration only and does not constitute tax advice.
+  </div>
+
+</div><!-- /tab-income -->
+
+
+<script>
+// ─────────────────────────────────────────────
+// SHARED TAX FUNCTIONS
+// ─────────────────────────────────────────────
+const BRACKETS = [
+  { from: 0,      to: 18200,      rate: 0.00 },
+  { from: 18201,  to: 45000,      rate: 0.16 },
+  { from: 45001,  to: 135000,     rate: 0.30 },
+  { from: 135001, to: 190000,     rate: 0.37 },
+  { from: 190001, to: Infinity,   rate: 0.45 },
+];
+
+function lito(income) {
+  // Two-stage phase-out per ATO 2025-26:
+  // 5c per $1 from $37,500 to $45,000 → LITO reduces from $700 to $325
+  // 1.5c per $1 from $45,000 to $66,667 → LITO reduces from $325 to $0
+  if (income <= 37500) return 700;
+  if (income <= 45000) return Math.max(0, 700 - (income - 37500) * 0.05);
+  if (income <= 66667) return Math.max(0, 325 - (income - 45000) * 0.015);
+  return 0;
+}
+
+function incomeTax(income) {
+  if (income <= 0) return 0;
+  let tax = 0;
+  for (const b of BRACKETS) {
+    if (income > b.from) tax += (Math.min(income, b.to) - b.from) * b.rate;
+  }
+  tax = Math.max(tax - lito(income), 0);
+  return tax + (income > 26000 ? income * 0.02 : 0);
+}
+
+function taxOnGain(otherIncome, gain) {
+  if (gain <= 0) return 0;
+  const marginal = Math.max(incomeTax(otherIncome + gain) - incomeTax(otherIncome), 0);
+  return Math.max(marginal, gain * 0.30);
+}
+
+function taxOnIncome(otherIncome, income) {
+  if (income <= 0) return 0;
+  return Math.max(incomeTax(otherIncome + income) - incomeTax(otherIncome), 0);
+}
+
+const aud  = n => '$' + Math.abs(n).toLocaleString('en-AU', {minimumFractionDigits:0, maximumFractionDigits:0});
+const aud2 = n => '$' + Math.abs(n).toLocaleString('en-AU', {minimumFractionDigits:2, maximumFractionDigits:2});
+const pct  = (n,d=1) => n.toFixed(d)+'%';
+const $    = id => document.getElementById(id);
+
+const INDIVIDUALS = [
+  { label: 'Individual — $0 other income',    other: 0,       color: '#4ade80', trustNote: true },
+  { label: 'Individual — $50K other income',  other: 50000,   color: '#F6D02F' },
+  { label: 'Individual — $100K other income', other: 100000,  color: '#fb923c' },
+  { label: 'Individual — $150K other income', other: 150000,  color: '#f472b6' },
+  { label: 'Individual — $200K other income', other: 200000,  color: '#a78bfa' },
+];
+
+
+// ── Split sync helper
+function updateSplit(id1, id2) {
+  const v = Math.min(Math.max(parseFloat(document.getElementById(id1).value) || 0, 0), 100);
+  document.getElementById(id2).value = (100 - v).toFixed(1);
+}
+
+// ── Tooltip breakdown helper
+function tipBreakdown(otherIncome, gain, gainLabel, taxPaid, netGain, nominalGain) {
+  const brackets = [{from:0,to:18200,rate:0},{from:18201,to:45000,rate:0.16},{from:45001,to:135000,rate:0.30},{from:135001,to:190000,rate:0.37},{from:190001,to:1e12,rate:0.45}];
+  const rateLabels = {0:'0%',0.16:'16%',0.30:'30%',0.37:'37%',0.45:'45%'};
+  const totalInc = otherIncome + gain;
+  let lines = [];
+
+  lines.push(`Other income:      ${aud2(otherIncome)}`);
+  lines.push(`+ ${gainLabel}: ${aud2(gain)}`);
+  lines.push(`= Total assessed:  ${aud2(totalInc)}`);
+  lines.push('');
+  lines.push('Marginal tax on gain:');
+
+  // Bracket-by-bracket tax on the gain portion only
+  let gainRemaining = gain;
+  let bracketTax = 0;
+  for (const b of brackets) {
+    if (gainRemaining <= 0) break;
+    const overlap = Math.min(totalInc, b.to) - Math.max(otherIncome, b.from);
+    if (overlap <= 0) continue;
+    const slice = Math.min(overlap, gainRemaining);
+    if (slice <= 0) continue;
+    const sliceTax = slice * b.rate;
+    bracketTax += sliceTax;
+    lines.push(`  ${rateLabels[b.rate]} on ${aud2(slice)}: ${aud2(sliceTax)}`);
+    gainRemaining -= slice;
+  }
+
+  // LITO reduction (only the portion lost due to the gain)
+  const litoBase  = lito(otherIncome);
+  const litoTotal = lito(totalInc);
+  const litoDiff  = litoBase - litoTotal;
+  if (litoDiff > 0.01) {
+    lines.push(`  Less LITO lost:  (${aud2(litoDiff)})`);
+    bracketTax += litoDiff;
+  }
+
+  // Medicare on the gain
+  const medicareOnGain = gain * 0.02;
+  lines.push(`  Medicare (2%):   ${aud2(medicareOnGain)}`);
+
+  const marginalTotal = bracketTax + medicareOnGain;
+  const floor         = gain * 0.30;
+  const floorBinds    = floor > marginalTotal + 0.005;
+
+  lines.push('');
+  if (floorBinds) {
+    lines.push(`Marginal tax:      ${aud2(marginalTotal)}`);
+    lines.push(`30% floor (${aud2(floor)}) applies`);
+    lines.push(`⚑ Floor overrides — marginal rate`);
+    lines.push(`  is below 30% of real gain`);
+  }
+
+  lines.push('─────────────────────────');
+  lines.push(`Tax on gain:       ${aud2(taxPaid)}`);
+  lines.push(`Nominal gain:      ${aud2(nominalGain)}`);
+  lines.push(`Net after-tax:     ${aud2(netGain)}`);
+  return lines.join('\n');
+}
+
+function tipCompany(nomG, compTax, compNetG, rate) {
+  return [
+    `Nominal gain:      ${aud2(nomG)}`,
+    `× company tax (${rate}%): ${aud2(compTax)}`,
+    '─────────────────────────',
+    `Net after-tax gain: ${aud2(compNetG)}`,
+  ].join('\n');
+}
+
+function tipIncome(otherIncome, gross, indTax, indNet) {
+  const brackets = [{from:0,to:18200,rate:0},{from:18201,to:45000,rate:0.16},{from:45001,to:135000,rate:0.30},{from:135001,to:190000,rate:0.37},{from:190001,to:1e12,rate:0.45}];
+  const rateLabels = {0:'0%',0.16:'16%',0.30:'30%',0.37:'37%',0.45:'45%'};
+  const totalInc = otherIncome + gross;
+  let lines = [];
+  lines.push(`Other income:      ${aud2(otherIncome)}`);
+  lines.push(`+ Distribution:    ${aud2(gross)}`);
+  lines.push(`= Total assessed:  ${aud2(totalInc)}`);
+  lines.push('');
+  let rem = gross;
+  for (const b of brackets) {
+    if (rem <= 0) break;
+    const overlap = Math.min(totalInc, b.to) - Math.max(otherIncome, b.from);
+    if (overlap <= 0) continue;
+    const slice = Math.min(overlap, rem);
+    if (slice <= 0) continue;
+    lines.push(`  ${rateLabels[b.rate]} on ${aud2(slice)}: ${aud2(slice * b.rate)}`);
+    rem -= slice;
+  }
+  const litoB = lito(otherIncome), litoT = lito(totalInc), litoDiff = litoB - litoT;
+  if (litoDiff > 0.01) lines.push(`  LITO reduction: ${aud2(litoDiff)}`);
+  lines.push(`  Medicare (2%): ${aud2(gross * 0.02)}`);
+  lines.push('─────────────────────────');
+  lines.push(`Tax on income:     ${aud2(indTax)}`);
+  lines.push(`Net after-tax:     ${aud2(indNet)}`);
+  return lines.join('\n');
+}
+
+// ─────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  $('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'cgt') goCGT();
+  if (name === 'income') goIncome();
+  if (name === 'historical') { hPopulate(); goHist(); }
+}
+
+// ─────────────────────────────────────────────
+// TAB 1 — CGT
+// ─────────────────────────────────────────────
+function goCGT() {
+  const P   = parseFloat($('invest').value) || 1000000;
+  const cpa = parseFloat($('cpi').value)    || 3.0;
+  const Y   = parseInt($('yrs').value)      || 10;
+  const gpa = parseFloat($('gr').value)     || 7.0;
+
+  const cpiM   = Math.pow(1 + cpa/100, Y);
+  const cpiPct = (cpiM - 1) * 100;
+  const saleP  = P * Math.pow(1 + gpa/100, Y);
+  const nomG   = saleP - P;
+  const adjP   = P * cpiM;
+  const realG  = Math.max(saleP - adjP, 0);
+
+  $('scen').textContent = `${aud(P)} at ${gpa}% p.a. for ${Y} yrs → ${aud2(saleP)} | CPI total: ${pct(cpiPct,2)}`;
+  $('g-pp').textContent   = aud2(P);
+  $('g-sale').textContent = aud2(saleP);
+  $('g-nom').textContent  = aud2(nomG);
+  $('g-icb').textContent  = aud2(adjP);
+  $('g-real').textContent = aud2(realG);
+
+  const compTax   = nomG * 0.30;
+  const compNetG  = nomG - compTax;
+  const compEffNom = nomG > 0 ? (compTax / nomG) * 100 : 0;
+
+  const tbody = $('tbody');
+  tbody.innerHTML = '';
+
+  // Company row
+  const compRow = tbody.insertRow();
+  compRow.className = 'total-row';
+  compRow.innerHTML = `
+    <td><span class="pill company">Company</span></td>
+    <td>N/A</td>
+    <td>${aud2(nomG)} <span style="font-size:10px;color:#888">(nominal)</span></td>
+    <td>${aud2(compTax)}</td>
+    <td>${pct(compEffNom,3)}</td>
+    <td><span class="td-tip" data-tip="${tipCompany(nomG, compTax, compNetG, 30)}">${aud2(compNetG)}</span></td>
+    <td>—</td>
+  `;
+
+  const winnerData = [];
+
+  for (const ind of INDIVIDUALS) {
+    const indTax = taxOnGain(ind.other, realG);
+    // Floor binds when marginal+medicare < 30% of gain
+    const marginalOnly = Math.max(incomeTax(ind.other + realG) - incomeTax(ind.other), 0);
+    const floorApplied = realG > 0 && (realG * 0.30) > (marginalOnly + realG * 0.02);
+    const indNetG   = nomG - indTax;
+    const indEffNom = nomG > 0 ? (indTax / nomG) * 100 : 0;
+    const netDiff   = indNetG - compNetG;
+
+    const vsComp = netDiff > 0
+      ? `<span class="pill ind">Ind. ahead by ${aud2(netDiff)}</span>`
+      : netDiff < 0
+      ? `<span class="pill company">Co. ahead by ${aud2(Math.abs(netDiff))}</span>`
+      : `<span class="pill neutral">Equal</span>`;
+
+    const floorNote = floorApplied
+      ? ` <span style="font-size:10px;color:#fb923c;font-family:inherit;" title="30% minimum floor is binding">⚑ 30% floor</span>`
+      : ` <span style="font-size:10px;color:#888;font-family:inherit;" title="Marginal rate exceeds 30% floor">↑ marginal rate</span>`;
+
+    const row = tbody.insertRow();
+    row.innerHTML = `
+      <td><span class="pill neutral">${ind.label}</span></td>
+      <td>${aud2(ind.other)}</td>
+      <td>${aud2(realG)} <span style="font-size:10px;color:#888">(indexed)</span></td>
+      <td>${aud2(indTax)}${floorNote}</td>
+      <td>${pct(indEffNom,3)}</td>
+      <td><span class="td-tip" data-tip="${tipBreakdown(ind.other, realG, 'Real (indexed) gain', indTax, indNetG, nomG)}">${aud2(indNetG)}</span></td>
+      <td>${vsComp}</td>
+    `;
+    winnerData.push({ label: ind.label.replace('Individual — ', ''), netDiff, color: ind.color });
+  }
+
+  // ── Discretionary Trust split — CGT tab
+  const tb1Other  = parseFloat($('trust-b1').value) || 0;
+  const tb2Other  = parseFloat($('trust-b2').value) || 0;
+  const splitPct  = Math.min(Math.max(parseFloat($('trust-split').value) || 50, 0), 100);
+  const split2Pct = 100 - splitPct;
+
+  const tb1Gain   = realG * (splitPct / 100);
+  const tb2Gain   = realG * (split2Pct / 100);
+  const tb1NomG   = nomG  * (splitPct / 100);
+  const tb2NomG   = nomG  * (split2Pct / 100);
+
+  const tb1Tax    = taxOnGain(tb1Other, tb1Gain);
+  const tb2Tax    = taxOnGain(tb2Other, tb2Gain);
+  const tb1Net    = tb1NomG - tb1Tax;
+  const tb2Net    = tb2NomG - tb2Tax;
+  const tbTotTax  = tb1Tax + tb2Tax;
+  const tbTotNet  = nomG - tbTotTax;
+  const tbEffRate = nomG > 0 ? (tbTotTax / nomG) * 100 : 0;
+  const tbVsComp  = tbTotNet - compNetG;
+
+  const trustTbody = $('trust-tbody-cgt');
+  trustTbody.innerHTML = '';
+
+  function trustFloorNote(other, gain) {
+    const m = Math.max(incomeTax(other + gain) - incomeTax(other), 0);
+    return (gain > 0 && gain * 0.30 > (m + gain * 0.02))
+      ? ` <span style="font-size:10px;color:#fb923c;font-family:inherit;">⚑ 30% floor</span>`
+      : ` <span style="font-size:10px;color:#7a90a8;font-family:inherit;">↑ marginal</span>`;
+  }
+
+  const b1lbl = ['$0','$50K','$100K','$150K','$200K'].find((_,i) => [0,50000,100000,150000,200000][i] === tb1Other) || '$0';
+  const b2lbl = ['$0','$50K','$100K','$150K','$200K'].find((_,i) => [0,50000,100000,150000,200000][i] === tb2Other) || '$0';
+
+  [
+    { lbl: `Beneficiary 1 (${b1lbl} other income)`, other: tb1Other, gain: tb1Gain, nomShare: tb1NomG, tax: tb1Tax, net: tb1Net, splitP: splitPct },
+    { lbl: `Beneficiary 2 (${b2lbl} other income)`, other: tb2Other, gain: tb2Gain, nomShare: tb2NomG, tax: tb2Tax, net: tb2Net, splitP: split2Pct },
+  ].forEach(b => {
+    const r = trustTbody.insertRow();
+    r.innerHTML = `
+      <td><span class="pill trust">${b.lbl}</span></td>
+      <td>${aud2(b.other)}</td>
+      <td>${b.splitP.toFixed(1)}%</td>
+      <td>${aud2(b.gain)} <span style="font-size:10px;color:#7a90a8">(indexed)</span></td>
+      <td>${aud2(b.tax)}${trustFloorNote(b.other, b.gain)}</td>
+      <td>${pct(b.nomShare > 0 ? (b.tax / b.nomShare) * 100 : 0, 3)}</td>
+      <td><span class="td-tip" data-tip="${tipBreakdown(b.other, b.gain, 'Share of real gain', b.tax, b.net, b.nomShare)}">${aud2(b.net)}</span></td>
+      <td>—</td>
+    `;
+  });
+
+  const totRow = trustTbody.insertRow();
+  totRow.className = 'total-row';
+  const tbVsCompCell = tbVsComp > 0
+    ? `<span class="pill ind">Trust ahead by ${aud2(tbVsComp)}</span>`
+    : tbVsComp < 0
+    ? `<span class="pill company">Co. ahead by ${aud2(Math.abs(tbVsComp))}</span>`
+    : `<span class="pill neutral">Equal</span>`;
+  totRow.innerHTML = `
+    <td>Discretionary Trust — Aggregate</td>
+    <td>—</td>
+    <td>100%</td>
+    <td>${aud2(realG)} <span style="font-size:10px;color:#7a90a8">(indexed)</span></td>
+    <td>${aud2(tbTotTax)}</td>
+    <td>${pct(tbEffRate, 3)}</td>
+    <td><span class="td-tip" data-tip="${`Beneficiary 1 net: ${aud2(tb1Net)}\nBeneficiary 2 net: ${aud2(tb2Net)}\n─────────────────────────\nAggregate net:     ${aud2(tbTotNet)}\n(= Nominal gain − combined tax)`}">${aud2(tbTotNet)}</span></td>
+    <td>${tbVsCompCell}</td>
+  `;
+
+  // ── Winner cards — after trust so trust is included
+  const wg = $('winner-grid');
+  wg.innerHTML = '';
+  for (const w of winnerData) {
+    const wins = w.netDiff > 0;
+    const tie  = Math.abs(w.netDiff) < 1;
+    const card = document.createElement('div');
+    card.className = `winner-card ${tie ? 'tie' : wins ? 'ind-wins' : 'comp-wins'}`;
+    card.innerHTML = `
+      <div class="wc-label">${w.label}</div>
+      <div class="wc-who ${tie ? 'tie' : wins ? 'ind' : 'comp'}">${tie ? '≈ Equal' : wins ? '✓ Individual wins' : '✗ Company wins'}</div>
+      <div class="wc-save">${tie ? 'Negligible difference' : wins ? `Ind. net ahead by ${aud2(w.netDiff)}` : `Co. net ahead by ${aud2(Math.abs(w.netDiff))}`}</div>
+    `;
+    wg.appendChild(card);
+  }
+  // Trust card
+  const trustWins = tbVsComp > 0;
+  const trustTie  = Math.abs(tbVsComp) < 1;
+  const trustCard = document.createElement('div');
+  trustCard.className = `winner-card ${trustTie ? 'tie' : trustWins ? 'ind-wins' : 'comp-wins'}`;
+  trustCard.innerHTML = `
+    <div class="wc-label">Discretionary Trust</div>
+    <div class="wc-who ${trustTie ? 'tie' : trustWins ? 'ind' : 'comp'}">${trustTie ? '≈ Equal' : trustWins ? '✓ Trust wins' : '✗ Company wins'}</div>
+    <div class="wc-save">${trustTie ? 'Negligible difference' : trustWins ? `Trust net ahead by ${aud2(tbVsComp)}` : `Co. net ahead by ${aud2(Math.abs(tbVsComp))}`}</div>
+  `;
+  wg.appendChild(trustCard);
+
+}
+
+// ─────────────────────────────────────────────
+// TAB 2 — INVESTMENT INCOME
+// ─────────────────────────────────────────────
+let chartIncome = null;
+
+function goIncome() {
+  const gross    = parseFloat($('ii-income').value)   || 100000;
+  const corpRate = parseFloat($('ii-corprate').value) || 30;
+  const corpRateD = corpRate / 100;
+
+  const compTax   = gross * corpRateD;
+  const compNet   = gross - compTax;
+
+  $('ii-scen').textContent    = `$${gross.toLocaleString('en-AU')} gross income · ${corpRate}% company tax`;
+  $('ii-g-gross').textContent = aud2(gross);
+  $('ii-g-ctax').textContent  = aud2(compTax);
+  $('ii-g-cnet').textContent  = aud2(compNet);
+
+  const tbody = $('ii-tbody');
+  tbody.innerHTML = '';
+
+  // Company row
+  const compRow = tbody.insertRow();
+  compRow.className = 'total-row';
+  compRow.innerHTML = `
+    <td><span class="pill company">Company</span></td>
+    <td>N/A</td>
+    <td>${aud2(gross)}</td>
+    <td>${aud2(compTax)}</td>
+    <td><span class="td-tip" data-tip="${tipCompany(gross, compTax, compNet, corpRate)}">${aud2(compNet)}</span></td>
+    <td>—</td>
+  `;
+
+  const winnerData = [];
+
+  for (const ind of INDIVIDUALS) {
+    // Trust distributes gross income directly — no entity-level tax
+    // Beneficiary pays marginal tax on gross distribution (no franking)
+    const indTax  = taxOnIncome(ind.other, gross);
+    const indNet  = gross - indTax;
+    const netDiff = indNet - compNet;
+
+    const vsComp = netDiff > 0
+      ? `<span class="pill ind">Ind. ahead by ${aud2(netDiff)}</span>`
+      : netDiff < 0
+      ? `<span class="pill company">Co. ahead by ${aud2(Math.abs(netDiff))}</span>`
+      : `<span class="pill neutral">Equal</span>`;
+
+    const trustNoteHtml = ind.trustNote
+      ? ` <span style="font-size:10px;color:#F6D02F;font-family:inherit;font-weight:400;" title="Does not include proposed 30% minimum tax on discretionary trust distributions (from 2028–29)">ℹ does not include proposed 30% trust distribution tax</span>`
+      : '';
+    const row = tbody.insertRow();
+    row.innerHTML = `
+      <td><span class="pill trust">Individual beneficiary — ${ind.label.replace('Individual — ','')}</span>${trustNoteHtml}</td>
+      <td>${aud2(ind.other)}</td>
+      <td>${aud2(gross)}</td>
+      <td>${aud2(indTax)}</td>
+      <td><span class="td-tip" data-tip="${tipIncome(ind.other, gross, indTax, indNet)}">${aud2(indNet)}</span></td>
+      <td>${vsComp}</td>
+    `;
+    winnerData.push({ label: ind.label.replace('Individual — ',''), netDiff, color: ind.color });
+  }
+
+  // Winner cards
+  const wg = $('ii-winner-grid');
+  wg.innerHTML = '';
+  for (const w of winnerData) {
+    const wins = w.netDiff > 0;
+    const tie  = Math.abs(w.netDiff) < 1;
+    const card = document.createElement('div');
+    card.className = `winner-card ${tie ? 'tie' : wins ? 'ind-wins' : 'comp-wins'}`;
+    card.innerHTML = `
+      <div class="wc-label">${w.label}</div>
+      <div class="wc-who ${tie ? 'tie' : wins ? 'ind' : 'comp'}">${tie ? '≈ Equal' : wins ? '✓ Individual wins' : '✗ Company wins'}</div>
+      <div class="wc-save">${tie ? 'Negligible difference' : wins ? `Ind. net ahead by ${aud2(w.netDiff)}` : `Co. net ahead by ${aud2(Math.abs(w.netDiff))}`}</div>
+    `;
+    wg.appendChild(card);
+  }
+
+  // ── Reinvestment chart: X = year 0..N, Y = compounded value of after-tax income
+  const retRate = parseFloat($('ii-retrate').value) || 7.0;
+  const retYrs  = parseInt($('ii-retyrs').value)    || 10;
+  const retMult = 1 + retRate / 100;
+
+  $('ii-ctitle').textContent =
+    `Value of after-tax income reinvested at ${retRate}% p.a. over ${retYrs} years`;
+
+  // Net after-tax amounts (per annum, reinvested from year 0)
+  const compNetAmt = compNet;
+  const indNetAmts = INDIVIDUALS.map(ind => gross - taxOnIncome(ind.other, gross));
+
+  // Build year-by-year compounded values
+  const labels2 = [], dsComp2 = [], dsInds2 = INDIVIDUALS.map(() => []);
+  for (let yr = 0; yr <= retYrs; yr++) {
+    labels2.push(yr.toString());
+    // FV of a lump sum after-tax income compounded: net × (1+r)^yr
+    dsComp2.push(parseFloat((compNetAmt * Math.pow(retMult, yr)).toFixed(2)));
+    INDIVIDUALS.forEach((ind, idx) => {
+      dsInds2[idx].push(parseFloat((indNetAmts[idx] * Math.pow(retMult, yr)).toFixed(2)));
+    });
+  }
+
+  const datasets2 = [
+    { label: 'Company', data: dsComp2, borderColor: '#DB0007', borderWidth: 2.5, pointRadius: 3, pointRadius: 0, fill: false, tension: 0.2, order: 1 },
+    ...INDIVIDUALS.map((ind, idx) => ({
+      label: 'Individual — ' + ind.label.replace('Individual — ',''),
+      data: dsInds2[idx], borderColor: ind.color,
+      borderWidth: 2, borderDash: [6,3], pointRadius: 0, fill: false, tension: 0.2, order: idx+2
+    })),
+  ];
+
+  const cfg2 = {
+    type: 'line', data: { labels: labels2, datasets: datasets2 },
+    options: {
+      responsive: true, animation: { duration: 180 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(6,20,40,.97)', titleColor: '#bbb', bodyColor: '#ddd',
+          borderColor: '#1e3d6e', borderWidth: 1, padding: 11,
+          callbacks: {
+            title: its => 'Year ' + its[0].label,
+            label: it => `${it.dataset.label}: ${aud2(it.parsed.y)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'category',
+          ticks: { color: '#555', font: { size: 11 },
+            callback: function(v) { const yr = parseInt(this.getLabelForValue(v)); return 'Yr ' + yr; }
+          },
+          grid: { color: 'rgba(255,255,255,.03)' },
+          title: { display: true, text: 'Years reinvested', color: '#666', font: { size: 11 }, padding: { top: 8 } }
+        },
+        y: {
+          ticks: { color: '#555', font: { size: 11 },
+            callback: v => '$' + (v >= 1000000 ? (v/1000000).toFixed(2)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v)
+          },
+          grid: { color: 'rgba(255,255,255,.03)' },
+          title: { display: true, text: 'Compounded value of reinvested income ($)', color: '#666', font: { size: 11 }, padding: { bottom: 8 } }
+        }
+      }
+    }
+  };
+
+  if (chartIncome) { chartIncome.data = cfg2.data; chartIncome.options = cfg2.options; chartIncome.update('none'); }
+  else { chartIncome = new Chart($('ch-income'), cfg2); }
+
+  // ── Discretionary Trust split — Income tab
+  const iiTb1Other  = parseFloat($('ii-trust-b1').value) || 0;
+  const iiTb2Other  = parseFloat($('ii-trust-b2').value) || 0;
+  const iiSplitPct  = Math.min(Math.max(parseFloat($('ii-trust-split').value) || 50, 0), 100);
+  const iiSplit2Pct = 100 - iiSplitPct;
+
+  const iiTb1Inc  = gross * (iiSplitPct / 100);
+  const iiTb2Inc  = gross * (iiSplit2Pct / 100);
+  const iiTb1Tax  = taxOnIncome(iiTb1Other, iiTb1Inc);
+  const iiTb2Tax  = taxOnIncome(iiTb2Other, iiTb2Inc);
+  const iiTb1Net  = iiTb1Inc - iiTb1Tax;
+  const iiTb2Net  = iiTb2Inc - iiTb2Tax;
+  const iiTotTax  = iiTb1Tax + iiTb2Tax;
+  const iiTotNet  = gross - iiTotTax;
+  const iiTbVsCo  = iiTotNet - compNet;
+
+  const iiTrustTbody = $('trust-tbody-ii');
+  iiTrustTbody.innerHTML = '';
+
+  const iiB1lbl = ['$0','$50K','$100K','$150K','$200K'].find((_,i) => [0,50000,100000,150000,200000][i] === iiTb1Other) || '$0';
+  const iiB2lbl = ['$0','$50K','$100K','$150K','$200K'].find((_,i) => [0,50000,100000,150000,200000][i] === iiTb2Other) || '$0';
+
+  [
+    { lbl: `Beneficiary 1 (${iiB1lbl} other income)`, other: iiTb1Other, inc: iiTb1Inc, tax: iiTb1Tax, net: iiTb1Net, splitP: iiSplitPct },
+    { lbl: `Beneficiary 2 (${iiB2lbl} other income)`, other: iiTb2Other, inc: iiTb2Inc, tax: iiTb2Tax, net: iiTb2Net, splitP: iiSplit2Pct },
+  ].forEach(b => {
+    const r = iiTrustTbody.insertRow();
+    r.innerHTML = `
+      <td><span class="pill trust">${b.lbl}</span></td>
+      <td>${aud2(b.other)}</td>
+      <td>${b.splitP.toFixed(1)}%</td>
+      <td>${aud2(b.inc)}</td>
+      <td>${aud2(b.tax)}</td>
+      <td><span class="td-tip" data-tip="${tipIncome(b.other, b.inc, b.tax, b.net)}">${aud2(b.net)}</span></td>
+      <td>—</td>
+    `;
+  });
+
+  const iiTotRow = iiTrustTbody.insertRow();
+  iiTotRow.className = 'total-row';
+  const iiTbVsCoCell = iiTbVsCo > 0
+    ? `<span class="pill ind">Trust ahead by ${aud2(iiTbVsCo)}</span>`
+    : iiTbVsCo < 0
+    ? `<span class="pill company">Co. ahead by ${aud2(Math.abs(iiTbVsCo))}</span>`
+    : `<span class="pill neutral">Equal</span>`;
+  iiTotRow.innerHTML = `
+    <td>Discretionary Trust — Aggregate</td>
+    <td>—</td>
+    <td>100%</td>
+    <td>${aud2(gross)}</td>
+    <td>${aud2(iiTotTax)}</td>
+    <td><span class="td-tip" data-tip="${`Beneficiary 1 net: ${aud2(iiTb1Net)}\nBeneficiary 2 net: ${aud2(iiTb2Net)}\n─────────────────────────\nAggregate net:     ${aud2(iiTotNet)}\n(= Gross income − combined tax)`}">${aud2(iiTotNet)}</span></td>
+    <td>${iiTbVsCoCell}</td>
+  `;
+
+}
+
+// ── Acknowledgement
+function dismissAck() {
+  const el = document.getElementById('ack-overlay');
+  el.style.opacity = '0';
+  el.style.transition = 'opacity .3s';
+  setTimeout(() => { el.style.display = 'none'; }, 300);
+}
+
+// ── JS tooltip engine
+(function() {
+  const tip = document.getElementById('js-tooltip');
+  let active = null;
+
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('.td-tip');
+    if (!el || el === active) return;
+    active = el;
+    tip.textContent = el.getAttribute('data-tip');
+    tip.style.display = 'block';
+    move(e);
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (active) move(e);
+  });
+
+  document.addEventListener('mouseout', e => {
+    if (active && e.target.closest('.td-tip') === active) {
+      tip.style.display = 'none';
+      active = null;
+    }
+  });
+
+  function move(e) {
+    const pad = 14;
+    const w   = tip.offsetWidth  || 290;
+    const h   = tip.offsetHeight || 180;
+    const vw  = window.innerWidth;
+    const vh  = window.innerHeight;
+
+    // Prefer above cursor, centred horizontally
+    let x = e.clientX - w / 2;
+    let y = e.clientY - h - pad;
+
+    // Clamp: don't go off right or left edge
+    x = Math.max(pad, Math.min(x, vw - w - pad));
+
+    // If no room above, show below
+    if (y < pad) y = e.clientY + pad;
+
+    // Clamp: don't go off bottom
+    if (y + h > vh - pad) y = vh - h - pad;
+
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  }
+})();
+
+// Init
+goCGT();
+
+// ─────────────────────────────────────────────
+// TAB 3 — HISTORICAL CGT
+// ─────────────────────────────────────────────
+const HCPI = {
+  1948:{mar:null,jun:null,sep:2.59,dec:2.63},1949:{mar:2.71,jun:2.74,sep:2.82,dec:2.86},
+  1950:{mar:2.90,jun:3.02,sep:3.05,dec:3.17},1951:{mar:3.32,jun:3.52,sep:3.71,dec:3.98},
+  1952:{mar:4.10,jun:4.25,sep:4.33,dec:4.37},1953:{mar:4.41,jun:4.45,sep:4.48,dec:4.45},
+  1954:{mar:4.48,jun:4.48,sep:4.48,dec:4.48},1955:{mar:4.52,jun:4.56,sep:4.60,dec:4.64},
+  1956:{mar:4.68,jun:4.83,sep:4.95,dec:4.95},1957:{mar:4.95,jun:4.99,sep:4.99,dec:4.99},
+  1958:{mar:5.03,jun:5.03,sep:5.03,dec:5.06},1959:{mar:5.10,jun:5.10,sep:5.14,dec:5.18},
+  1960:{mar:5.22,jun:5.30,sep:5.37,dec:5.41},1961:{mar:5.45,jun:5.49,sep:5.45,dec:5.45},
+  1962:{mar:5.45,jun:5.45,sep:5.45,dec:5.45},1963:{mar:5.45,jun:5.45,sep:5.49,dec:5.49},
+  1964:{mar:5.53,jun:5.57,sep:5.64,dec:5.68},1965:{mar:5.72,jun:5.80,sep:5.84,dec:5.91},
+  1966:{mar:5.95,jun:5.99,sep:5.99,dec:6.07},1967:{mar:6.11,jun:6.15,sep:6.26,dec:6.26},
+  1968:{mar:6.30,jun:6.34,sep:6.38,dec:6.42},1969:{mar:6.49,jun:6.53,sep:6.57,dec:6.61},
+  1970:{mar:6.69,jun:6.77,sep:6.80,dec:6.92},1971:{mar:7.00,jun:7.11,sep:7.27,dec:7.42},
+  1972:{mar:7.50,jun:7.58,sep:7.69,dec:7.77},1973:{mar:7.93,jun:8.20,sep:8.47,dec:8.78},
+  1974:{mar:9.01,jun:9.39,sep:9.86,dec:10.21},1975:{mar:10.59,jun:10.98,sep:11.06,dec:11.68},
+  1976:{mar:11.98,jun:12.29,sep:12.60,dec:13.34},1977:{mar:13.65,jun:13.96,sep:14.23,dec:14.57},
+  1978:{mar:14.77,jun:15.08,sep:15.35,dec:15.70},1979:{mar:15.97,jun:16.39,sep:16.78,dec:17.28},
+  1980:{mar:17.67,jun:18.17,sep:18.48,dec:18.87},1981:{mar:19.33,jun:19.76,sep:20.14,dec:20.99},
+  1982:{mar:21.38,jun:21.88,sep:22.65,dec:23.31},1983:{mar:23.81,jun:24.32,sep:24.74,dec:25.32},
+  1984:{mar:25.21,jun:25.28,sep:25.59,dec:25.98},1985:{mar:26.33,jun:26.95,sep:27.56,dec:28.11},
+  1986:{mar:28.76,jun:29.23,sep:30.00,dec:30.85},1987:{mar:31.47,jun:31.93,sep:32.47,dec:33.05},
+  1988:{mar:33.63,jun:34.21,sep:34.87,dec:35.57},1989:{mar:35.91,jun:36.80,sep:37.65,dec:38.35},
+  1990:{mar:39.01,jun:39.63,sep:39.94,dec:40.98},1991:{mar:40.90,jun:40.98,sep:41.21,dec:41.60},
+  1992:{mar:41.60,jun:41.48,sep:41.52,dec:41.71},1993:{mar:42.10,jun:42.25,sep:42.45,dec:42.53},
+  1994:{mar:42.68,jun:42.99,sep:43.26,dec:43.61},1995:{mar:44.34,jun:44.92,sep:45.46,dec:45.81},
+  1996:{mar:46.00,jun:46.31,sep:46.43,dec:46.51},1997:{mar:46.58,jun:46.47,sep:46.28,dec:46.39},
+  1998:{mar:46.51,jun:46.78,sep:46.91,dec:47.11},1999:{mar:47.08,jun:47.29,sep:47.72,dec:47.97},
+  2000:{mar:48.40,jun:48.77,sep:50.59,dec:50.76},2001:{mar:51.30,jun:51.73,sep:51.87,dec:52.35},
+  2002:{mar:52.82,jun:53.20,sep:53.56,dec:53.92},2003:{mar:54.62,jun:54.62,sep:54.93,dec:55.22},
+  2004:{mar:55.71,jun:55.97,sep:56.20,dec:56.63},2005:{mar:57.01,jun:57.35,sep:57.92,dec:58.22},
+  2006:{mar:58.72,jun:59.65,sep:60.18,dec:60.11},2007:{mar:60.16,jun:60.90,sep:61.32,dec:61.89},
+  2008:{mar:62.72,jun:63.63,sep:64.37,dec:64.16},2009:{mar:64.23,jun:64.55,sep:65.16,dec:65.51},
+  2010:{mar:66.12,jun:66.52,sep:67.00,dec:67.26},2011:{mar:68.30,jun:68.93,sep:69.34,dec:69.34},
+  2012:{mar:69.38,jun:69.74,sep:70.69,dec:70.87},2013:{mar:71.11,jun:71.38,sep:72.25,dec:72.77},
+  2014:{mar:73.20,jun:73.57,sep:73.88,dec:74.02},2015:{mar:74.16,jun:74.69,sep:74.98,dec:75.27},
+  2016:{mar:75.12,jun:75.45,sep:75.98,dec:76.38},2017:{mar:76.73,jun:76.88,sep:77.35,dec:77.87},
+  2018:{mar:78.21,jun:78.49,sep:78.83,dec:79.24},2019:{mar:79.23,jun:79.70,sep:80.15,dec:80.70},
+  2020:{mar:81.00,jun:79.44,sep:80.67,dec:81.40},2021:{mar:81.87,jun:82.47,sep:83.17,dec:84.23},
+  2022:{mar:86.05,jun:87.59,sep:89.20,dec:90.85},2023:{mar:92.08,jun:92.87,sep:93.94,dec:94.53},
+  2024:{mar:95.41,jun:96.41,sep:96.62,dec:96.81},2025:{mar:97.70,jun:98.43,sep:99.73,dec:100.32},
+  2026:{mar:101.70,jun:null,sep:null,dec:null}
+};
+const H_QTR = ['mar','jun','sep','dec'];
+const H_QLBL = {mar:'Mar',jun:'Jun',sep:'Sep',dec:'Dec'};
+
+function hGetCPI(yr, qtr) {
+  const y = parseInt(yr);
+  return (HCPI[y] && HCPI[y][qtr] != null) ? HCPI[y][qtr] : null;
+}
+
+function hPopulate() {
+  // Only populate once — if already populated, just ensure defaults are set
+  const sel0 = document.getElementById('h-py');
+  if (!sel0) return;
+  if (sel0.options.length > 0) return;
+  const years = Object.keys(HCPI).map(Number).sort();
+  ['h-py','h-sy'].forEach((id, i) => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '';
+    years.forEach(y => {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      sel.appendChild(o);
+    });
+    sel.value = i === 0 ? 2009 : 2016;
+  });
+}
+
+function taxOnGain50(otherIncome, discGain) {
+  // 50% discount — no 30% floor, pure marginal rate on halved gain
+  if (discGain <= 0) return 0;
+  return Math.max(incomeTax(otherIncome + discGain) - incomeTax(otherIncome), 0);
+}
+
+function goHist() {
+  const P       = parseFloat($('h-purchase').value) || 465000;
+  const py      = $('h-py').value;
+  const pq      = $('h-pq').value;
+  const sy      = $('h-sy').value;
+  const sq      = $('h-sq').value;
+  const saleMode = $('h-salemode').value;
+  const saleVal  = parseFloat($('h-saleval').value) || 7.0;
+  const show50   = $('h-show50').checked;
+
+  // Update label
+  $('h-sale-label').textContent = saleMode === 'growth' ? 'Annual growth rate (% p.a.)' : 'Sale price ($)';
+
+  const cpiP = hGetCPI(py, pq);
+  const cpiS = hGetCPI(sy, sq);
+  $('h-cpi-p').textContent = cpiP != null ? `CPI: ${cpiP.toFixed(2)}` : 'No data';
+  $('h-cpi-s').textContent = cpiS != null ? `CPI: ${cpiS.toFixed(2)}` : 'No data';
+
+  const errEl = $('h-err');
+
+  if (cpiP == null || cpiS == null) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'CPI data not available for one or both selected quarters.';
+    return;
+  }
+
+  // Calculate years between quarters (approximate)
+  const qOrd = {mar:0,jun:1,sep:2,dec:3};
+  const years = (parseInt(sy) - parseInt(py)) + (qOrd[sq] - qOrd[pq]) / 4;
+
+  if (years <= 0) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Sale date must be later than purchase date.';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  // Sale price
+  let saleP;
+  if (saleMode === 'growth') {
+    saleP = P * Math.pow(1 + saleVal / 100, years);
+    $('h-derived').textContent = `→ Sale price: ${aud2(saleP)} (${saleVal}% p.a. × ${years.toFixed(2)} yrs)`;
+  } else {
+    saleP = saleVal;
+    const impliedGrowth = (Math.pow(saleP / P, 1 / years) - 1) * 100;
+    $('h-derived').textContent = `→ Implied growth: ${impliedGrowth.toFixed(2)}% p.a. over ${years.toFixed(2)} yrs`;
+  }
+
+  $('h-scen').textContent = `${aud2(P)} · ${H_QLBL[pq]} ${py} (CPI ${cpiP}) → ${H_QLBL[sq]} ${sy} (CPI ${cpiS})`;
+
+  const nomG   = saleP - P;
+  const idxFac = cpiS / cpiP;
+  const adjP   = P * idxFac;
+  const realG  = Math.max(saleP - adjP, 0);
+  const discG  = Math.max(nomG * 0.50, 0);  // 50% discount taxable gain
+
+  // Tiles
+  $('h-t-pp').textContent   = aud2(P);
+  $('h-t-sale').textContent = aud2(saleP);
+  $('h-t-cpip').textContent = `${cpiP.toFixed(2)} (${H_QLBL[pq]} ${py})`;
+  $('h-t-cpis').textContent = `${cpiS.toFixed(2)} (${H_QLBL[sq]} ${sy})`;
+  $('h-t-nom').textContent  = nomG >= 0 ? aud2(nomG) : `(${aud2(Math.abs(nomG))})`;
+  $('h-t-real').textContent = realG > 0 ? aud2(realG) : `(${aud2(Math.abs(saleP - adjP))})`;
+
+  // Company
+  const compTax  = Math.max(nomG, 0) * 0.30;
+  const compNetG = nomG - compTax;
+
+  // Build table
+  const tbody = $('h-tbody');
+  tbody.innerHTML = '';
+
+  // Company row
+  const cr = tbody.insertRow();
+  cr.className = 'total-row';
+  cr.innerHTML = `
+    <td><span class="pill company">Company — 30% on nominal gain</span></td>
+    <td>N/A</td>
+    <td>${aud2(Math.max(nomG,0))} <span style="font-size:10px;color:#888">(nominal)</span></td>
+    <td>${aud2(compTax)}</td>
+    <td>${nomG>0?pct(30,3):pct(0,3)}</td>
+    <td><span class="td-tip" data-tip="${tipCompany(Math.max(nomG,0), compTax, compNetG, 30)}">${aud2(compNetG)}</span></td>
+    <td>—</td>
+    <td>—</td>
+  `;
+
+  for (const ind of INDIVIDUALS) {
+    // Indexation method
+    const idxTax  = taxOnGain(ind.other, realG);
+    const idxNet  = nomG - idxTax;
+    const idxEff  = nomG > 0 ? (idxTax / nomG) * 100 : 0;
+    const idxDiff = idxNet - compNetG;
+    const margOnly = Math.max(incomeTax(ind.other + realG) - incomeTax(ind.other), 0);
+    const floorApplied = realG > 0 && (realG * 0.30) > (margOnly + realG * 0.02);
+    const floorNote = floorApplied
+      ? ` <span style="font-size:10px;color:#fb923c;font-family:inherit;">⚑ 30% floor</span>`
+      : ` <span style="font-size:10px;color:#888;font-family:inherit;">↑ marginal</span>`;
+
+    const vsIdx = idxDiff > 0
+      ? `<span class="pill ind">Ind. +${aud2(idxDiff)}</span>`
+      : idxDiff < 0
+      ? `<span class="pill company">Co. +${aud2(Math.abs(idxDiff))}</span>`
+      : `<span class="pill neutral">Equal</span>`;
+
+    // Compute 50% discount figures (always, so diff column is always available)
+    const d50Tax  = taxOnGain50(ind.other, discG);
+    const d50Net  = nomG - d50Tax;
+    const d50Eff  = nomG > 0 ? (d50Tax / nomG) * 100 : 0;
+    const d50Diff = d50Net - compNetG;
+    const diffNet = idxNet - d50Net;  // positive = indexation better for taxpayer
+
+    // Diff column: only meaningful when show50 is on
+    const diffCell = show50
+      ? diffNet > 0.01
+        ? `<span style="color:#aaa;font-size:11px;font-family:inherit;">Idx higher by ${aud2(diffNet)}</span>`
+        : diffNet < -0.01
+        ? `<span style="color:#aaa;font-size:11px;font-family:inherit;">50% higher by ${aud2(Math.abs(diffNet))}</span>`
+        : `<span style="color:#666;font-size:11px;font-family:inherit;">Equal</span>`
+      : `<span style="color:#555;font-size:11px;">—</span>`;
+
+    const idxRow = tbody.insertRow();
+    idxRow.innerHTML = `
+      <td><span class="pill neutral">${ind.label}</span> <span style="font-size:10px;color:#F6D02F">Indexation</span></td>
+      <td>${aud2(ind.other)}</td>
+      <td>${aud2(realG)} <span style="font-size:10px;color:#888">(indexed)</span></td>
+      <td>${aud2(idxTax)}${floorNote}</td>
+      <td>${pct(idxEff,3)}</td>
+      <td><span class="td-tip" data-tip="${tipBreakdown(ind.other, realG, 'Real (indexed) gain', idxTax, idxNet, nomG)}">${aud2(idxNet)}</span></td>
+      <td>${vsIdx}</td>
+      <td>${diffCell}</td>
+    `;
+
+    if (show50) {
+      const vs50 = d50Diff > 0
+        ? `<span class="pill ind">Ind. +${aud2(d50Diff)}</span>`
+        : d50Diff < 0
+        ? `<span class="pill company">Co. +${aud2(Math.abs(d50Diff))}</span>`
+        : `<span class="pill neutral">Equal</span>`;
+      const d50Row = tbody.insertRow();
+      d50Row.style.background = 'rgba(251,146,60,.04)';
+      d50Row.innerHTML = `
+        <td style="padding-left:33px;color:#777;"><span class="pill neutral" style="opacity:0.75">${ind.label}</span> <span style="font-size:10px;color:#fb923c">50% Discount</span></td>
+        <td>${aud2(ind.other)}</td>
+        <td>${aud2(discG)} <span style="font-size:10px;color:#888">(50% of nominal)</span></td>
+        <td>${aud2(d50Tax)}</td>
+        <td>${pct(d50Eff,3)}</td>
+        <td><span class="td-tip" data-tip="${tipBreakdown(ind.other, discG, '50% discount gain', d50Tax, d50Net, nomG)}">${aud2(d50Net)}</span></td>
+        <td>${vs50}</td>
+        <td>—</td>
+      `;
+    }
+  }
+
+}
+
+
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     TAB 3 — HISTORICAL CGT
+═══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-historical">
+
+  <div class="st">Investment details</div>
+  <div class="grid3">
+    <div class="f"><label>Purchase price ($)</label><input type="number" id="h-purchase" value="465000" oninput="goHist()"></div>
+    <div class="f" style="grid-column:span 2;">
+      <label style="visibility:hidden">x</label>
+      <div style="height:36px;display:flex;align-items:center;font-size:12px;color:#555;" id="h-scen"></div>
+    </div>
+  </div>
+
+  <div class="st">Purchase quarter <span style="font-size:10px;font-weight:400;color:#555;text-transform:none;letter-spacing:0">(ABS CPI sourced from <a href="https://www.rateinflation.com/consumer-price-index/australia-historical-cpi/" target="_blank" style="color:#F6D02F;text-decoration:none">rateinflation.com</a>)</span></div>
+  <div class="grid3" style="margin-bottom:.5rem">
+    <div class="f"><label>Year</label><select id="h-py" onchange="goHist()"></select></div>
+    <div class="f"><label>Quarter</label>
+      <select id="h-pq" onchange="goHist()">
+        <option value="mar">Mar</option><option value="jun" selected>Jun</option>
+        <option value="sep">Sep</option><option value="dec">Dec</option>
+      </select>
+    </div>
+    <div class="f"><label style="visibility:hidden">x</label>
+      <div style="height:36px;display:flex;align-items:center;font-size:13px;color:#F6D02F;font-family:monospace;" id="h-cpi-p">—</div>
+    </div>
+  </div>
+
+  <div class="st">Sale quarter</div>
+  <div class="grid3" style="margin-bottom:.5rem">
+    <div class="f"><label>Year</label><select id="h-sy" onchange="goHist()"></select></div>
+    <div class="f"><label>Quarter</label>
+      <select id="h-sq" onchange="goHist()">
+        <option value="mar">Mar</option><option value="jun" selected>Jun</option>
+        <option value="sep">Sep</option><option value="dec">Dec</option>
+      </select>
+    </div>
+    <div class="f"><label style="visibility:hidden">x</label>
+      <div style="height:36px;display:flex;align-items:center;font-size:13px;color:#F6D02F;font-family:monospace;" id="h-cpi-s">—</div>
+    </div>
+  </div>
+
+  <div class="st">Sale price</div>
+  <div class="grid3" style="margin-bottom:1rem">
+    <div class="f">
+      <label>Method</label>
+      <select id="h-salemode" onchange="goHist()">
+        <option value="growth">Annual growth rate (% p.a.)</option>
+        <option value="price">Actual sale price ($)</option>
+      </select>
+    </div>
+    <div class="f" id="h-sale-field">
+      <label id="h-sale-label">Annual growth rate (% p.a.)</label>
+      <input type="number" id="h-saleval" value="7.0" step="0.1" oninput="goHist()">
+    </div>
+    <div class="f"><label style="visibility:hidden">x</label>
+      <div style="height:36px;display:flex;align-items:center;font-size:12px;color:#555;" id="h-derived"></div>
+    </div>
+  </div>
+
+  <div class="st">Compare against</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.5rem;">
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#aaa;cursor:pointer;">
+      <input type="checkbox" id="h-show50" onchange="goHist()" checked style="width:16px;height:16px;accent-color:#F6D02F;">
+      Show 50% CGT discount method (nominal gain × 50%, taxed at marginal rate)
+    </label>
+
+  </div>
+
+  <hr>
+  <div class="st">Gain summary</div>
+  <div id="h-err" style="display:none;background:rgba(219,0,7,.1);border:1px solid rgba(219,0,7,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#DB0007;margin-bottom:1rem;"></div>
+  <div class="gain-strip5" id="h-tiles" style="grid-template-columns:repeat(6,1fr)">
+    <div class="gs"><div class="gs-l">Purchase price</div><div class="gs-v" id="h-t-pp">—</div></div>
+    <div class="gs"><div class="gs-l">Sale price</div><div class="gs-v" id="h-t-sale">—</div></div>
+    <div class="gs"><div class="gs-l">CPI at purchase</div><div class="gs-v blue" id="h-t-cpip">—</div></div>
+    <div class="gs"><div class="gs-l">CPI at sale</div><div class="gs-v blue" id="h-t-cpis">—</div></div>
+    <div class="gs"><div class="gs-l">Nominal gain</div><div class="gs-v orange" id="h-t-nom">—</div></div>
+    <div class="gs"><div class="gs-l">Real gain (indexed)</div><div class="gs-v green" id="h-t-real">—</div></div>
+  </div>
+
+  <hr>
+  <div class="st">CGT comparison — indexation method vs company (and optionally 50% discount)</div>
+  <div class="comp-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left">Taxpayer / Method</th>
+          <th>Other income</th>
+          <th>Taxable gain</th>
+          <th>Tax on gain</th>
+          <th>Effective rate on gain</th>
+          <th>Net after-tax gain<br><span style="font-size:10px;font-weight:400">(nominal gain − tax)</span></th>
+          <th>vs Company</th>
+          <th>Indexation vs<br>50% Discount</th>
+        </tr>
+      </thead>
+      <tbody id="h-tbody"></tbody>
+    </table>
+  </div>
+
+  <p class="note">
+    <strong>Methodology:</strong>
+    CPI figures are quarterly ABS all-groups weighted average of eight capital cities, sourced from rateinflation.com. The indexed cost base = purchase price × (CPI at sale ÷ CPI at purchase). The real gain = sale price − indexed cost base. Individuals pay 2025–26 marginal rates plus 2% Medicare levy on the real gain (subject to the 30% minimum floor). Companies pay 30% on the full nominal gain. Where the 50% discount toggle is on, the discount gain = nominal gain × 50%, taxed at each individual's marginal rate with no 30% floor (the discount method does not carry a minimum rate).
+    LITO: max $700 up to $37,500; tapers at 5c/$ to $45,000 (→ $325), then 1.5c/$ to $66,667 (→ $0).
+  </p>
+  <div class="note-box blue" style="margin-top:.75rem;">
+    ℹ️ Under the <em>Treasury Laws Amendment (Tax Reform No. 1) Act 2026</em>, cost-base indexation with a 30% minimum tax replaces the 50% discount from 1 July 2027 for gains accruing from that date. This tab lets you apply both methods to any historical purchase and sale period for comparison purposes. This is a general illustration only and does not constitute tax advice.
+  </div>
+
+</div><!-- /tab-historical -->
+
+</body>
+</html>
