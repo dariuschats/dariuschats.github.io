@@ -212,18 +212,19 @@ canvas { width: 100% !important; }
     <button id="ack-btn" onclick="dismissAck()">
       I understand and acknowledge this is a calculator only and does not constitute financial, taxation or legal advice
     </button>
-    <p id="ack-logo">Australian Tax Structure Calculator · 2025–26 rates</p>
+    <p id="ack-logo">Australian Tax Structure Calculator · 2026–27 rates</p>
   </div>
 </div>
 
 <div class="page-header">
   <h1>Australian Tax — Structure Comparison</h1>
-  <p class="subtitle">Compare CGT and investment income outcomes across company, trust, and individual structures · 2025–26 tax rates</p>
+  <p class="subtitle">Compare CGT and investment income outcomes across company, trust, and individual structures · 2026–27 tax rates</p>
 </div>
 
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('cgt')">Capital Gains Tax</button>
   <button class="tab-btn" onclick="switchTab('income')">Investment Income</button>
+  <button class="tab-btn" onclick="switchTab('taxcomp')">30% Trust Tax Comparison</button>
   <button class="tab-btn" onclick="switchTab('historical')">Historical CPI</button>
 </div>
 
@@ -331,7 +332,7 @@ canvas { width: 100% !important; }
     The comparison is the <strong>net after-tax gain</strong> — what the investor retains after CGT (nominal gain minus tax paid).
     <strong>Company:</strong> pays 30% tax on the full nominal gain; no CGT discount applies. This assumes the company has no prior-year losses or amounts previously taxed under the 50% CGT discount that would otherwise shelter or reduce the gain — in other words, the full nominal gain is assessed at the corporate rate.
     <strong>Individual:</strong> pays marginal tax (subject to a 30% floor) on the CPI-indexed real gain only.
-    Individual tax uses 2025–26 Australian resident marginal rates (0%, 16%, 30%, 37%, 45%) plus 2% Medicare levy. The real gain is stacked on top of other income to determine the marginal rate for each dollar. The Low Income Tax Offset (LITO) is included: maximum $700 for incomes up to $37,500, reducing at 5 cents per dollar between $37,500 and $45,000 (to $325), then at 1.5 cents per dollar between $45,000 and $66,667, reaching zero above $66,667.
+    Individual tax uses 2026–27 Australian resident marginal rates (0%, 15%, 30%, 37%, 45%) plus 2% Medicare levy. The real gain is stacked on top of other income to determine the marginal rate for each dollar. The Low Income Tax Offset (LITO) is included: maximum $700 for incomes up to $37,500, reducing at 5 cents per dollar between $37,500 and $45,000 (to $325), then at 1.5 cents per dollar between $45,000 and $66,667, reaching zero above $66,667.
   </p>
   <div class="note-box amber">
     <strong>⚑ 30% minimum tax on indexed gains — applies to all individuals:</strong>
@@ -466,7 +467,7 @@ canvas { width: 100% !important; }
     The company pays corporate tax at the nominated rate on gross income. This table reflects the tax position at the entity level — the net amount retained by the company after tax, available for reinvestment. Any subsequent dividend distribution to shareholders would attract additional personal tax (offset by franking credits) and is not modelled here.
     <strong>Reinvestment chart:</strong>
     Shows the compounded value of the after-tax income if reinvested at the nominated annual return rate over the selected number of years. The starting point for each line is the net investment income after tax. This illustrates the long-run advantage of a lower initial tax burden, as a higher after-tax amount compounds more quickly over time.
-    Individual tax uses 2025–26 Australian resident marginal rates (0%, 16%, 30%, 37%, 45%) plus 2% Medicare levy. The Low Income Tax Offset (LITO) is included: maximum $700 for incomes up to $37,500, reducing at 5 cents per dollar between $37,500 and $45,000 (to $325), then at 1.5 cents per dollar between $45,000 and $66,667, reaching zero above $66,667. Note that LITO is a non-refundable offset — it can reduce income tax to zero but cannot generate a refund, and it does not reduce the Medicare levy.
+    Individual tax uses 2026–27 Australian resident marginal rates (0%, 15%, 30%, 37%, 45%) plus 2% Medicare levy. The Low Income Tax Offset (LITO) is included: maximum $700 for incomes up to $37,500, reducing at 5 cents per dollar between $37,500 and $45,000 (to $325), then at 1.5 cents per dollar between $45,000 and $66,667, reaching zero above $66,667. Note that LITO is a non-refundable offset — it can reduce income tax to zero but cannot generate a refund, and it does not reduce the Medicare levy.
   </p>
   <div class="note-box blue" style="margin-top:.75rem;">
     ℹ️ This comparison does not account for trust distribution minutes, the trustee's discretion over which beneficiary receives income, Division 7A implications of retained company profits, or the additional 30% minimum tax on trust distributions from discretionary trusts announced for 2028–29. This is a general illustration only and does not constitute tax advice.
@@ -481,7 +482,7 @@ canvas { width: 100% !important; }
 // ─────────────────────────────────────────────
 const BRACKETS = [
   { from: 0,      to: 18200,      rate: 0.00 },
-  { from: 18201,  to: 45000,      rate: 0.16 },
+  { from: 18201,  to: 45000,      rate: 0.15 },
   { from: 45001,  to: 135000,     rate: 0.30 },
   { from: 135001, to: 190000,     rate: 0.37 },
   { from: 190001, to: Infinity,   rate: 0.45 },
@@ -540,8 +541,8 @@ function updateSplit(id1, id2) {
 
 // ── Tooltip breakdown helper
 function tipBreakdown(otherIncome, gain, gainLabel, taxPaid, netGain, nominalGain) {
-  const brackets = [{from:0,to:18200,rate:0},{from:18201,to:45000,rate:0.16},{from:45001,to:135000,rate:0.30},{from:135001,to:190000,rate:0.37},{from:190001,to:1e12,rate:0.45}];
-  const rateLabels = {0:'0%',0.16:'16%',0.30:'30%',0.37:'37%',0.45:'45%'};
+  const brackets = [{from:0,to:18200,rate:0},{from:18201,to:45000,rate:0.15},{from:45001,to:135000,rate:0.30},{from:135001,to:190000,rate:0.37},{from:190001,to:1e12,rate:0.45}];
+  const rateLabels = {0:'0%',0.15:'15%',0.30:'30%',0.37:'37%',0.45:'45%'};
   const totalInc = otherIncome + gain;
   let lines = [];
 
@@ -608,8 +609,8 @@ function tipCompany(nomG, compTax, compNetG, rate) {
 }
 
 function tipIncome(otherIncome, gross, indTax, indNet) {
-  const brackets = [{from:0,to:18200,rate:0},{from:18201,to:45000,rate:0.16},{from:45001,to:135000,rate:0.30},{from:135001,to:190000,rate:0.37},{from:190001,to:1e12,rate:0.45}];
-  const rateLabels = {0:'0%',0.16:'16%',0.30:'30%',0.37:'37%',0.45:'45%'};
+  const brackets = [{from:0,to:18200,rate:0},{from:18201,to:45000,rate:0.15},{from:45001,to:135000,rate:0.30},{from:135001,to:190000,rate:0.37},{from:190001,to:1e12,rate:0.45}];
+  const rateLabels = {0:'0%',0.15:'15%',0.30:'30%',0.37:'37%',0.45:'45%'};
   const totalInc = otherIncome + gross;
   let lines = [];
   lines.push(`Other income:      ${aud2(otherIncome)}`);
@@ -645,6 +646,7 @@ function switchTab(name) {
   event.currentTarget.classList.add('active');
   if (name === 'cgt') goCGT();
   if (name === 'income') goIncome();
+  if (name === 'taxcomp') goTaxComp();
   if (name === 'historical') { hPopulate(); goHist(); }
 }
 
@@ -1087,6 +1089,295 @@ function dismissAck() {
   }
 })();
 
+
+// ─────────────────────────────────────────────
+// TAX RATE COMPARISON CHART
+// ─────────────────────────────────────────────
+let chartTaxComp = null;
+
+// tax2526: income tax only, NO Medicare levy.
+// Uses ascending LITO matched to the published MTO comparison table:
+//   - Ascending at 2¢/$ from $18,200, capped at $700 at $53,200
+//   - Phases out at 1.5¢/$ above $45,000, floor of $535
+// This differs from the other tabs in this tool which include Medicare levy
+// and use the standard two-stage LITO taper — see note below the chart.
+function litoMTO(inc) {
+  if (inc <= 18200) return 0;
+  const ascending = Math.min(700, (inc - 18200) * 0.02);
+  if (inc <= 45000) return ascending;
+  return Math.min(ascending, Math.max(535, 700 - (inc - 45000) * 0.015));
+}
+
+function tax2526(inc) {
+  if (inc <= 0) return 0;
+  const brackets = [
+    {from:0,    to:18200,   rate:0.00},
+    {from:18201,to:45000,   rate:0.16},
+    {from:45001,to:135000,  rate:0.30},
+    {from:135001,to:190000, rate:0.37},
+    {from:190001,to:1e12,   rate:0.45},
+  ];
+  let t = 0;
+  for (const b of brackets)
+    if (inc > b.from) t += (Math.min(inc, b.to) - b.from) * b.rate;
+  return Math.max(t - litoMTO(inc), 0);  // No Medicare levy
+}
+
+function taxCompTooltip(income) {
+  const indTax  = tax2526(income);
+  const flatTax = income * 0.30;
+  const diff    = indTax - flatTax;
+
+  const brackets = [
+    {from:0,    to:18200,   rate:0.00, label:'0%'},
+    {from:18201,to:45000,   rate:0.16, label:'16%'},
+    {from:45001,to:135000,  rate:0.30, label:'30%'},
+    {from:135001,to:190000, rate:0.37, label:'37%'},
+    {from:190001,to:1e12,   rate:0.45, label:'45%'},
+  ];
+
+  let bracketLines = '';
+  for (const b of brackets) {
+    if (income <= b.from) continue;
+    const slice    = Math.min(income, b.to) - b.from;
+    const sliceTax = slice * b.rate;
+    if (b.rate === 0) continue;
+    bracketLines += `<div style="display:flex;justify-content:space-between;gap:16px;">
+      <span style="color:#7a90a8">${b.label} on ${aud2(slice)}</span>
+      <span>${aud2(sliceTax)}</span></div>`;
+  }
+
+  const litoAmt = litoMTO(income);
+
+  // diff < 0 means individual pays LESS than 30% flat — trust tax is more expensive
+  // diff > 0 means individual pays MORE than 30% flat — individual rate is higher
+
+  return `
+    <div style="font-size:11px;font-weight:600;color:#7a90a8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">
+      Taxable income: ${aud2(income)}
+    </div>
+    <div style="margin-bottom:8px;">
+      <div style="font-size:11px;color:#F6D02F;margin-bottom:4px;font-weight:600;">Individual tax (2025–26)</div>
+      ${bracketLines}
+      ${litoAmt > 0 ? `<div style="display:flex;justify-content:space-between;gap:16px;"><span style="color:#7a90a8">Less LITO</span><span>(${aud2(litoAmt)})</span></div>` : ''}
+      <div style="display:flex;justify-content:space-between;gap:16px;border-top:1px solid #1e3d6e;margin-top:4px;padding-top:4px;">
+        <span style="color:#ccd5e0">Total individual tax</span><span style="color:#F6D02F;font-weight:600">${aud2(indTax)}</span></div>
+      <div style="text-align:right;font-style:italic;font-size:11px;color:#7a90a8;margin-top:2px;">Effective rate: ${income > 0 ? (indTax/income*100).toFixed(2) : '0.00'}%</div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:#DB0007;margin-bottom:4px;font-weight:600;">30% Trust Distribution Tax</div>
+      <div style="display:flex;justify-content:space-between;gap:16px;">
+        <span style="color:#7a90a8">30% × ${aud2(income)}</span>
+        <span style="color:#DB0007;font-weight:600">${aud2(flatTax)}</span></div>
+    </div>
+    <div style="border-top:2px solid #1e3d6e;padding-top:10px;margin-top:2px;">
+      ${diff < 0
+        ? `<div style="font-size:13px;font-weight:700;color:#DB0007;display:flex;justify-content:space-between;gap:16px;">
+             <span>30% Trust Distribution Tax — more tax payable</span>
+             <span>${aud2(Math.abs(diff))}</span>
+           </div>`
+        : diff > 0.01
+        ? `<div style="font-size:13px;font-weight:700;color:#fb923c;display:flex;justify-content:space-between;gap:16px;">
+             <span>Individual rate — more tax payable</span>
+             <span>${aud2(Math.abs(diff))}</span>
+           </div>`
+        : `<div style="font-size:13px;font-weight:700;color:#7a90a8;text-align:center;">
+             Crossover — individual tax equals 30% flat
+           </div>`
+      }
+    </div>`;
+}
+
+function taxCompJump(val) {
+  const income = parseFloat(val);
+  const resultDiv = document.getElementById('taxcomp-jump-result');
+  if (!income || income < 0 || income > 300000) {
+    resultDiv.textContent = '';
+    return;
+  }
+  const indTax  = tax2526(income);
+  const flatTax = income * 0.30;
+  const diff    = flatTax - indTax;  // positive = trust tax is more
+
+  // Show tooltip at this income
+  const tip = document.getElementById('js-tooltip');
+  tip.innerHTML = taxCompTooltip(income);
+  tip.style.display = 'block';
+
+  // Position tooltip near the chart on the page
+  const canvas = document.getElementById('ch-taxcomp');
+  if (canvas && chartTaxComp) {
+    const rect  = canvas.getBoundingClientRect();
+    const scale = chartTaxComp.scales.x;
+    const STEPS = 500, MAX_INC = 400000;
+    const idx   = Math.round((income / MAX_INC) * STEPS);
+    const xFrac = Math.max(0, Math.min(1, (idx / STEPS)));
+    const xPx   = scale.left + xFrac * (scale.right - scale.left);
+    const pad = 14, w = tip.offsetWidth||290, h = tip.offsetHeight||220;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    // Position near the canvas point on screen
+    const canvasX = rect.left + xPx;
+    const canvasY = rect.top + rect.height * 0.4;
+    let x = canvasX - w / 2;
+    let y = canvasY - h - pad;
+    x = Math.max(pad, Math.min(x, vw - w - pad));
+    if (y < pad) y = canvasY + pad;
+    if (y + h > vh - pad) y = vh - h - pad;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  }
+
+  // Show inline summary
+  resultDiv.innerHTML = diff > 0.01
+    ? `<strong style="color:#DB0007;">At ${aud2(income)}: 30% trust tax pays ${aud2(flatTax)} vs individual ${aud2(indTax)} — trust tax is ${aud2(diff)} more</strong>`
+    : diff < -0.01
+    ? `<strong style="color:#fb923c;">At ${aud2(income)}: individual tax ${aud2(indTax)} exceeds 30% flat ${aud2(flatTax)} — individual pays ${aud2(Math.abs(diff))} more</strong>`
+    : `<strong style="color:#7a90a8;">At ${aud2(income)}: crossover — both methods equal ${aud2(indTax)}</strong>`;
+}
+
+function goTaxComp() {
+  const STEPS  = 500;
+  const MAX_INC = 400000;
+  const labels  = [], dInd = [], dFlat = [], dBand = [];
+
+  for (let i = 0; i <= STEPS; i++) {
+    const inc = (MAX_INC / STEPS) * i;
+    labels.push(inc.toFixed(0));
+    const ind  = tax2526(inc);
+    const flat = inc * 0.30;
+    dInd.push(parseFloat(ind.toFixed(2)));
+    dFlat.push(parseFloat(flat.toFixed(2)));
+    // fill dataset: value where ind < flat (individual advantaged), null otherwise
+    dBand.push(null); // placeholder — we use fill between datasets
+  }
+
+  const datasets = [
+    {
+      label: 'Individual (2025–26)',
+      data: dInd,
+      borderColor: '#F6D02F',
+      borderWidth: 2.5,
+      pointRadius: 0,
+      tension: 0.2,
+      fill: false,
+      order: 1,
+    },
+    {
+      label: 'Flat 30%',
+      data: dFlat,
+      borderColor: '#DB0007',
+      borderWidth: 2,
+      borderDash: [7, 4],
+      pointRadius: 0,
+      tension: 0,
+      fill: false,
+      order: 2,
+    },
+    // Shaded fill where individual < flat (ind advantaged — yellow tint)
+    {
+      label: '_fill_ind',
+      data: dInd.map((v, i) => v < dFlat[i] ? v : dFlat[i]),
+      borderColor: 'transparent',
+      backgroundColor: 'rgba(246,208,47,.10)',
+      pointRadius: 0,
+      fill: { target: 1, above: 'rgba(246,208,47,.10)', below: 'transparent' },
+      order: 3,
+    },
+    // Shaded fill where individual > flat (flat advantaged — red tint)
+    {
+      label: '_fill_flat',
+      data: dFlat.map((v, i) => v < dInd[i] ? v : dInd[i]),
+      borderColor: 'transparent',
+      backgroundColor: 'rgba(219,0,7,.08)',
+      pointRadius: 0,
+      fill: { target: 0, below: 'rgba(219,0,7,.08)', above: 'transparent' },
+      order: 4,
+    },
+  ];
+
+  // Dynamic y-axis max
+  const maxY   = Math.max(...dFlat) * 1.15;
+  const mag    = Math.pow(10, Math.floor(Math.log10(maxY)));
+  const niceY  = [1,1.5,2,2.5,3,4,5,6,8,10].map(f=>f*mag).find(f=>f>=maxY)||maxY;
+
+  const ticks  = [0,50000,100000,150000,200000,250000,300000,350000,400000];
+
+  const cfg = {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 200 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false }, // we use custom tooltip
+      },
+      scales: {
+        x: {
+          type: 'category',
+          ticks: {
+            color: '#506070', font: { size: 11 }, maxTicksLimit: 9,
+            callback: function(v) {
+              const inc = parseFloat(this.getLabelForValue(v));
+              return ticks.some(t => Math.abs(t-inc) < 500) ? '$'+(inc/1000).toFixed(0)+'K' : null;
+            }
+          },
+          grid: { color: 'rgba(255,255,255,.03)' },
+          title: { display: true, text: 'Taxable income ($)', color: '#607080', font: { size: 11 }, padding: { top: 8 } },
+        },
+        y: {
+          min: 0, max: niceY,
+          ticks: {
+            color: '#506070', font: { size: 11 },
+            callback: v => '$'+(v>=1000?(v/1000).toFixed(0)+'K':v),
+          },
+          grid: { color: 'rgba(255,255,255,.03)' },
+          title: { display: true, text: 'Tax payable ($)', color: '#607080', font: { size: 11 }, padding: { bottom: 8 } },
+        },
+      },
+    },
+  };
+
+  if (chartTaxComp) {
+    chartTaxComp.data = cfg.data;
+    chartTaxComp.options = cfg.options;
+    chartTaxComp.update('none');
+  } else {
+    chartTaxComp = new Chart($('ch-taxcomp'), cfg);
+  }
+
+  // ── Custom tooltip: uses the global #js-tooltip div
+  const canvas = $('ch-taxcomp');
+  const tip    = document.getElementById('js-tooltip');
+
+  canvas.addEventListener('mousemove', function(e) {
+    const rect  = canvas.getBoundingClientRect();
+    const xPos  = e.clientX - rect.left;
+    const chart = chartTaxComp;
+    if (!chart) return;
+    const scale = chart.scales.x;
+    if (!scale) return;
+    const idx = Math.round((xPos - scale.left) / (scale.right - scale.left) * STEPS);
+    if (idx < 0 || idx > STEPS) { tip.style.display = 'none'; return; }
+    const income = parseFloat(labels[idx]);
+    tip.innerHTML = taxCompTooltip(income);
+    tip.style.display = 'block';
+    const pad = 14, w = tip.offsetWidth || 290, h = tip.offsetHeight || 220;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let x = e.clientX - w / 2;
+    let y = e.clientY - h - pad;
+    x = Math.max(pad, Math.min(x, vw - w - pad));
+    if (y < pad) y = e.clientY + pad;
+    if (y + h > vh - pad) y = vh - h - pad;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  });
+
+  canvas.addEventListener('mouseleave', function() { tip.style.display = 'none'; });
+}
+
 // Init
 goCGT();
 
@@ -1326,6 +1617,95 @@ function goHist() {
 </script>
 
 <!-- ═══════════════════════════════════════════════════
+     TAB — TAX RATE COMPARISON
+═══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-taxcomp">
+
+  <div class="st">Individual income tax vs flat 30% — 2025–26 Australian rates</div>
+  <p style="font-size:13px;color:#7a90a8;line-height:1.6;margin-bottom:1.5rem;">
+    This chart compares income tax payable by an individual under the 2025–26 Australian rates — <strong>excluding Medicare levy</strong> — against a flat 30% minimum tax, consistent with the published MTO comparison table for discretionary trust distributions. Where individual tax falls below 30%, the Minimum Tax Offset (MTO) bridges the gap. Above $229,320 the individual rate exceeds 30% and a top-up applies. Hover over the chart or type an income below for a full breakdown.
+  </p>
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;">
+    <div class="f" style="max-width:240px;margin:0;">
+      <label style="font-size:12px;color:#8a9ab0;">Jump to taxable income ($)</label>
+      <input type="number" id="taxcomp-jump" placeholder="e.g. 80000" min="0" max="300000" step="1000"
+        style="height:36px;border-radius:7px;border:1px solid #1e3d6e;background:#0e2040;color:#e8eaf0;padding:0 11px;font-size:14px;width:100%;"
+        oninput="taxCompJump(this.value)">
+    </div>
+    <div id="taxcomp-jump-result" style="font-size:12px;color:#7a90a8;margin-top:18px;line-height:1.5;"></div>
+  </div>
+
+  <div class="chart-card" style="background:#0C2340;border:1px solid #1e3d6e;border-radius:12px;padding:1.5rem 1.75rem 1.25rem;margin-bottom:1.25rem;position:relative;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem;">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#506070;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem;">Tax payable by income level</div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#8a9ab0;">
+            <div style="width:28px;height:3px;background:#F6D02F;border-radius:2px;"></div>Individual — 2025–26 rates (incl. LITO &amp; Medicare)
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#8a9ab0;">
+            <div style="width:28px;height:3px;background:#DB0007;border-radius:2px;background:repeating-linear-gradient(90deg,#DB0007 0,#DB0007 7px,transparent 7px,transparent 11px)"></div>Flat 30% rate (company / trust minimum)
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#8a9ab0;">
+            <div style="width:28px;height:6px;background:rgba(246,208,47,.12);border-radius:2px;"></div>Individual pays less (individual advantaged)
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#8a9ab0;">
+            <div style="width:28px;height:6px;background:rgba(219,0,7,.1);border-radius:2px;"></div>Individual pays more (flat rate advantaged)
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="position:relative;height:420px;width:100%;">
+      <canvas id="ch-taxcomp"></canvas>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #173060;padding-top:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1rem;">
+
+    <div style="background:#0e2040;border-radius:8px;padding:12px 15px;">
+      <div style="font-size:11px;font-weight:600;color:#F6D02F;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Individual income tax formula (2025–26)</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;color:#7a90a8;line-height:1.7;">
+        <tr><td style="padding:1px 0;color:#ccd5e0;font-weight:600;">Tax brackets</td><td></td></tr>
+        <tr><td style="padding-left:8px;">$0 – $18,200</td><td style="text-align:right;">0%</td></tr>
+        <tr><td style="padding-left:8px;">$18,201 – $45,000</td><td style="text-align:right;">16%</td></tr>
+        <tr><td style="padding-left:8px;">$45,001 – $135,000</td><td style="text-align:right;">30%</td></tr>
+        <tr><td style="padding-left:8px;">$135,001 – $190,000</td><td style="text-align:right;">37%</td></tr>
+        <tr><td style="padding-left:8px;">$190,001+</td><td style="text-align:right;">45%</td></tr>
+        <tr><td colspan="2" style="padding-top:8px;color:#ccd5e0;font-weight:600;">Low Income Tax Offset (LITO) — ascending formula</td></tr>
+        <tr><td style="padding-left:8px;">$0 – $18,200</td><td style="text-align:right;">Nil</td></tr>
+        <tr><td style="padding-left:8px;">$18,201 – $53,200</td><td style="text-align:right;">+2¢ per $ (→ max $700)</td></tr>
+        <tr><td style="padding-left:8px;">$45,001 – $56,667</td><td style="text-align:right;">−1.5¢ per $ (floor $535)</td></tr>
+        <tr><td style="padding-left:8px;">Above $56,667</td><td style="text-align:right;">$535 flat</td></tr>
+        <tr><td colspan="2" style="padding-top:8px;font-size:10px;color:#506070;font-style:italic;">Medicare levy excluded — income tax only, consistent with the published MTO comparison table for discretionary trust distributions.</td></tr>
+      </table>
+    </div>
+
+    <div style="background:#0e2040;border-radius:8px;padding:12px 15px;">
+      <div style="font-size:11px;font-weight:600;color:#DB0007;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Minimum Tax Obligation (MTO) — flat 30%</div>
+      <div style="font-size:11px;color:#7a90a8;line-height:1.8;">
+        <div style="margin-bottom:6px;">Under proposed trust distribution rules, a 30% minimum tax applies to discretionary trust distributions. Where the beneficiary's income tax falls <em>below</em> 30% of the distribution, a <strong style="color:#4ade80">Minimum Tax Offset (MTO)</strong> bridges the gap — the trust pays a top-up to reach the 30% minimum.</div>
+        <div style="margin-bottom:6px;">Where the beneficiary's tax <em>exceeds</em> 30%, no MTO applies and the higher individual rate applies.</div>
+        <div style="border-top:1px solid #1e3d6e;padding-top:8px;margin-top:4px;">
+          <span style="color:#ccd5e0;font-weight:600;">Crossover (MTO = nil): </span>
+          <span style="color:#F6D02F;font-weight:700;">$229,320</span><br>
+          <span style="font-size:10px;color:#506070;">At this income, individual income tax (excluding Medicare) equals exactly 30% of the distribution. Below this point the individual's tax is lower and the MTO bridges the gap; above it a top-up tax applies.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div style="background:rgba(246,208,47,.07);border:1px solid rgba(246,208,47,.25);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:11px;color:#b0a040;line-height:1.7;">
+    <strong style="color:#F6D02F;">⚑ Important difference from other tabs in this tool:</strong>
+    This tab models <strong>income tax only, without the 2% Medicare levy</strong>, to be consistent with the published MTO comparison table for discretionary trust distributions referenced above. All other tabs in this tool (Capital Gains Tax, Investment Income, Historical CPI) include the Medicare levy in their individual tax calculations. If you were to include Medicare levy here, the crossover point would reduce to approximately $199,200 and the maximum MTO saving would reduce from $9,748 to approximately $8,637.
+  </div>
+  <p class="note" style="font-size:11px;color:#405060;line-height:1.7;">
+    This calculator is for general illustration only and does not constitute financial or tax advice.
+  </p>
+
+</div><!-- /tab-taxcomp -->
+
+<!-- ═══════════════════════════════════════════════════
      TAB 3 — HISTORICAL CGT
 ═══════════════════════════════════════════════════ -->
 <div class="tab-panel" id="tab-historical">
@@ -1428,7 +1808,7 @@ function goHist() {
 
   <p class="note">
     <strong>Methodology:</strong>
-    CPI figures are quarterly ABS all-groups weighted average of eight capital cities, sourced from rateinflation.com. The indexed cost base = purchase price × (CPI at sale ÷ CPI at purchase). The real gain = sale price − indexed cost base. Individuals pay 2025–26 marginal rates plus 2% Medicare levy on the real gain (subject to the 30% minimum floor). Companies pay 30% on the full nominal gain. Where the 50% discount toggle is on, the discount gain = nominal gain × 50%, taxed at each individual's marginal rate with no 30% floor (the discount method does not carry a minimum rate).
+    CPI figures are quarterly ABS all-groups weighted average of eight capital cities, sourced from rateinflation.com. The indexed cost base = purchase price × (CPI at sale ÷ CPI at purchase). The real gain = sale price − indexed cost base. Individuals pay 2026–27 marginal rates plus 2% Medicare levy on the real gain (subject to the 30% minimum floor). Companies pay 30% on the full nominal gain. Where the 50% discount toggle is on, the discount gain = nominal gain × 50%, taxed at each individual's marginal rate with no 30% floor (the discount method does not carry a minimum rate).
     LITO: max $700 up to $37,500; tapers at 5c/$ to $45,000 (→ $325), then 1.5c/$ to $66,667 (→ $0).
   </p>
   <div class="note-box blue" style="margin-top:.75rem;">
