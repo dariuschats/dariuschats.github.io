@@ -561,7 +561,7 @@ button#downloadAll:hover{
   <header>
     <p class="eyebrow">FILE CLERK</p>
     <h1>Splitting Documents</h1>
-    <p class="sub">Upload a combined PDF &mdash; a Will filed together with an EPA, for instance &mdash; and mark where each individual document ends. Where the PDF has a text layer, the tool reads each piece to guess its type, the person's name and the execution date, and pre-fills the file name for you to check. Page previews render right in this tab, and the split itself runs instantly with no upload or OCR pass. Nothing leaves this browser tab.</p>
+    <p class="sub">Upload a combined PDF &mdash; any mix of Wills and EPAs, one of each or several of either &mdash; and mark where each individual document ends. Where the PDF has a text layer, the tool reads each piece to guess its type, the person's name and the execution date, and pre-fills the file name for you to check. Page previews render right in this tab, and the split itself runs instantly with no upload or OCR pass. Nothing leaves this browser tab.</p>
   </header>
 
   <div id="dropzone" class="dropzone">
@@ -581,7 +581,7 @@ button#downloadAll:hover{
     <div id="thumbGrid" class="thumb-grid"></div>
 
     <div class="ocr-row">
-      <button type="button" id="ocrBtn">&#128269; Scan with OCR (find Will/EPA boundaries &amp; names)</button>
+      <button type="button" id="ocrBtn">&#128269; Scan with OCR (find every document’s boundaries &amp; names)</button>
       <span class="hint">Reads the top of every page as an image &mdash; slower than the text-layer check above, but works on scans.</span>
     </div>
 
@@ -712,7 +712,7 @@ button#downloadAll:hover{
     // boilerplate clauses deep in a Will that merely *refer* to an EPA or
     // to "the Willmaker" as a defined term, without actually being one.
     if (/last will and testament/i.test(text)) return "Will";
-    if (/enduring power of attorney[\s\S]{0,60}-\s*(?:short|long)\s*form/i.test(text) || /^\s*form\s+[23]\b/i.test(text)) return "EPA";
+    if (/enduring power of attorney[^\n]*-\s*(?:short|long)\s*form\s*-\s*[A-Z]/i.test(text) || /^\s*form\s+[23]\b/i.test(text)) return "EPA";
     return null;
   }
 
@@ -801,7 +801,7 @@ button#downloadAll:hover{
     allActions.hidden = true;
     runBtn.disabled = true;
     ocrBtn.disabled = false;
-    ocrBtn.textContent = "\u{1F50D} Scan with OCR (find Will/EPA boundaries & names)";
+    ocrBtn.textContent = "\u{1F50D} Scan with OCR (find every document's boundaries & names)";
     globalDateInput.value = "";
     setGlobalStatus("");
     dropzone.classList.remove("has-file");
@@ -1002,6 +1002,7 @@ button#downloadAll:hover{
     segmentInputs = [];
 
     var baseName = currentFile ? stripExt(currentFile.name) : "document";
+    var usedNames = {};
 
     segs.forEach(function (seg, idx) {
       var item = document.createElement("div");
@@ -1048,6 +1049,14 @@ button#downloadAll:hover{
           ? "couldn't identify the document type \u2014 name it manually, or try the OCR scan"
           : "no text layer on this page \u2014 name it manually, or try the OCR scan";
         hintDim = true;
+      }
+
+      if (usedNames[guessed]) {
+        usedNames[guessed]++;
+        hintText += " \u2014 same name as another segment, numbered to keep files distinct";
+        guessed = guessed + " (" + usedNames[guessed] + ")";
+      } else {
+        usedNames[guessed] = 1;
       }
 
       var input = document.createElement("input");
@@ -1222,7 +1231,6 @@ button#downloadAll:hover{
       setGlobalStatus("Starting OCR engine (downloading language data on first use)\u2026");
       worker = await Tesseract.createWorker("eng");
 
-      var runningType = null;
       var boundariesFound = [];
       var pageFailures = 0;
       var lastError = null;
@@ -1237,19 +1245,23 @@ button#downloadAll:hover{
           var text = (result && result.data && result.data.text) || "";
           ocrTexts[i] = text;
 
+          // Any page whose top matches a title trigger ("Last Will and
+          // testament of...", or the EPA "- short/long form -" title, or a
+          // bare Form 2/3 cover) is the first page of a document -- full
+          // stop. This deliberately does NOT compare against the previous
+          // page's type: two Wills or two EPAs back-to-back must still
+          // split, so "did the type change" is the wrong test. "Did a new
+          // title just start" is the right one.
           var type = detectType(text);
-          if (type && type !== runningType) {
-            if (i > 1) {
-              splitAfter[i - 1] = true;
-              boundariesFound.push(i - 1);
-              var prevWrap = thumbGrid.querySelector('[data-page="' + (i - 1) + '"]');
-              if (prevWrap) {
-                prevWrap.classList.add("split-after");
-                var prevToggle = prevWrap.querySelector(".split-toggle");
-                if (prevToggle) prevToggle.classList.add("active");
-              }
+          if (type && i > 1) {
+            splitAfter[i - 1] = true;
+            boundariesFound.push(i - 1);
+            var prevWrap = thumbGrid.querySelector('[data-page="' + (i - 1) + '"]');
+            if (prevWrap) {
+              prevWrap.classList.add("split-after");
+              var prevToggle = prevWrap.querySelector(".split-toggle");
+              if (prevToggle) prevToggle.classList.add("active");
             }
-            runningType = type;
           }
         } catch (pageErr) {
           ocrTexts[i] = ocrTexts[i] || "";
@@ -1276,7 +1288,7 @@ button#downloadAll:hover{
         setGlobalStatus(
           boundariesFound.length
             ? "OCR scan complete \u2014 found " + (boundariesFound.length + 1) + " documents (split after page " + boundariesFound.join(", ") + "). Check the names below."
-            : "OCR scan complete \u2014 didn't find a Will/EPA boundary; treated as one document. Check the name below, or mark a split manually."
+            : "OCR scan complete \u2014 didn't find a document boundary; treated as one document. Check the name below, or mark a split manually."
         );
       }
     } catch (err) {
