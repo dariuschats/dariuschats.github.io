@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Private Dictation</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+    --border: #dcdad4; --accent: #2f6f5e; --accent-text: #ffffff;
+    --rec: #c0392b; --warn-bg: #fff4d6; --warn-text: #6a4b00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161617; --card: #222224; --text: #ececec; --muted: #a0a0a6;
+      --border: #3a3a3e; --accent: #4fae93; --accent-text: #0d1f1a;
+      --rec: #e0564a; --warn-bg: #3b3218; --warn-text: #f2d48a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  h2 { font-size: 1rem; margin: 0 0 10px; }
+  .sub { color: var(--muted); margin: 0 0 18px; font-size: .92rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 14px;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  select, button {
+    font: inherit; border-radius: 8px; border: 1px solid var(--border);
+    padding: 9px 14px; background: var(--card); color: var(--text);
+  }
+  button { cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  #recBtn {
+    width: 100%; padding: 18px; font-size: 1.15rem; font-weight: 600;
+    background: var(--accent); color: var(--accent-text); border-color: var(--accent);
+  }
+  #recBtn.recording { background: var(--rec); border-color: var(--rec); color: #fff; }
+  textarea {
+    width: 100%; min-height: 260px; resize: vertical; font: inherit;
+    padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+  }
+  .status { font-size: .9rem; color: var(--muted); margin-top: 10px; min-height: 1.4em; }
+  progress { width: 100%; height: 8px; margin-top: 8px; display: none; }
+  .warn {
+    background: var(--warn-bg); color: var(--warn-text); border-radius: 8px;
+    padding: 10px 12px; font-size: .9rem; margin-top: 10px; display: none;
+  }
+  label { font-size: .9rem; color: var(--muted); }
+  .grow { flex: 1 1 220px; }
+  details { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+  summary { cursor: pointer; font-size: .92rem; color: var(--muted); }
+  .check { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; }
+  .check input { margin-top: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Private Dictation</h1>
+  <p class="sub">Whisper runs inside your browser from model files kept in your own folder. Your audio never leaves this device.</p>
+
+  <section class="card">
+    <div class="row">
+      <button id="loadBtn" class="primary">Load model</button>
+      <button id="pickBtn">Choose model folder…</button>
+    </div>
+    <progress id="prog" max="100" value="0"></progress>
+    <div class="status" id="status">Model not loaded yet.</div>
+    <div class="warn" id="warn"></div>
+
+    <details id="dlBox">
+      <summary>First time? Download the model into a folder (needs internet, one time only)</summary>
+      <div class="row" style="margin-top:10px">
+        <div class="grow">
+          <label for="modelSel">Model</label><br>
+          <select id="modelSel" style="width:100%">
+            <option value="onnx-community/whisper-large-v3-turbo">Large v3 Turbo – most accurate</option>
+            <option value="onnx-community/whisper-small">Small – faster, less accurate</option>
+            <option value="onnx-community/whisper-base">Base – fastest, least accurate</option>
+          </select>
+        </div>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="incCpu">
+        <span>Also include the processor-only version, for devices without graphics acceleration (some phones). Makes the download bigger.</span>
+      </label>
+      <button id="dlBtn">Download model to a folder…</button>
+    </details>
+    <input type="file" id="folderInput" webkitdirectory multiple hidden>
+  </section>
+
+  <section class="card">
+    <button id="recBtn" disabled>🎙 Start dictating</button>
+    <div class="status" id="recStatus"></div>
+    <label class="check">
+      <input type="checkbox" id="paraEach">
+      <span>Start each recording on a new paragraph</span>
+    </label>
+    <details style="margin-top:4px">
+      <summary>Spoken commands</summary>
+      <div class="status">
+        "new paragraph" / "next paragraph" – paragraph break<br>
+        "new line" / "next line" – line break<br>
+        "bullet point" / "next bullet" / "new bullet" – bulleted line (•)<br>
+        "open quote" … "close quote" – quotation marks<br>
+        "open bracket" … "close bracket" – brackets<br>
+        Plurals work too ("new paragraphs", "bullet points").
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <textarea id="out" placeholder="Your dictated text appears here. You can edit it before copying."></textarea>
+    <div class="row" style="margin-top:10px">
+      <button id="copyBtn">Copy all</button>
+      <button id="saveBtn">Save as text file</button>
+      <button id="clearBtn">Clear</button>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+const LIB = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
+const HF = 'https://huggingface.co';
+
+// Which model files each hardware type needs
+const VARIANTS = {
+  gpu: { device: 'webgpu', dtype: { encoder_model: 'fp16', decoder_model_merged: 'q4' },
+         files: ['onnx/encoder_model_fp16.onnx', 'onnx/decoder_model_merged_q4.onnx'] },
+  cpu: { device: 'wasm', dtype: 'q8',
+         files: ['onnx/encoder_model_quantized.onnx', 'onnx/decoder_model_merged_quantized.onnx'] }
+};
+const MANIFEST = 'dictation-model.json';
+
+const $ = id => document.getElementById(id);
+const statusEl = $('status'), recStatus = $('recStatus'), prog = $('prog'), warn = $('warn');
+const loadBtn = $('loadBtn'), pickBtn = $('pickBtn'), dlBtn = $('dlBtn');
+const recBtn = $('recBtn'), modelSel = $('modelSel'), out = $('out'), folderInput = $('folderInput');
+
+let transcriber = null, busy = false;
+
+function showWarn(msg) { warn.textContent = msg || ''; warn.style.display = msg ? 'block' : 'none'; }
+function setBusy(b) { busy = b; [loadBtn, pickBtn, dlBtn, modelSel].forEach(el => el.disabled = b); }
+function gb(bytes) { return (bytes / 1e9).toFixed(2) + ' GB'; }
+const baseName = p => p.split('/').pop();
+
+async function hasWebGPU() {
+  try { return !!(navigator.gpu && await navigator.gpu.requestAdapter()); } catch (e) { return false; }
+}
+
+// ---------- Remember the chosen folder (computer browsers only) ----------
+function idb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('private-dictation', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function idbGet(k) {
+  try { const db = await idb(); return await new Promise(r => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(undefined); }); }
+  catch (e) { return undefined; }
+}
+async function idbSet(k, v) {
+  try { const db = await idb(); db.transaction('kv', 'readwrite').objectStore('kv').put(v, k); } catch (e) {}
+}
+
+// ---------- Reading model files from a folder ----------
+async function walkHandle(dir, prefix = '', depth = 0, acc = []) {
+  if (depth > 3) return acc;
+  for await (const [name, h] of dir.entries()) {
+    if (h.kind === 'file') acc.push({ path: prefix + name, get: () => h.getFile() });
+    else await walkHandle(h, prefix + name + '/', depth + 1, acc);
+  }
+  return acc;
+}
+
+// From a flat list of {path, get}, pick the folder that holds the model and map file name -> entry
+function chooseModelFiles(entries) {
+  const configs = entries.filter(e => baseName(e.path) === 'config.json');
+  if (!configs.length) return null;
+  const want = modelSel.value.split('/')[1];
+  const dirOf = p => p.slice(0, p.length - 'config.json'.length);
+  const chosen = configs.find(c => dirOf(c.path).includes(want)) || configs[0];
+  const root = dirOf(chosen.path);
+  const map = new Map();
+  for (const e of entries) {
+    if (!e.path.startsWith(root)) continue;
+    const rest = e.path.slice(root.length);
+    if (rest.split('/').length > 2) continue;            // only the model folder and its onnx subfolder
+    map.set(baseName(e.path), e);
+  }
+  return map;
+}
+
+async function pickFolder() {
+  if (window.showDirectoryPicker) {
+    try { return { handle: await window.showDirectoryPicker({ id: 'dictation-models', mode: 'read' }) }; }
+    catch (e) { return null; }
+  }
+  return new Promise(res => {
+    folderInput.value = '';
+    folderInput.onchange = () => res({
+      entries: [...folderInput.files].map(f => ({ path: f.webkitRelativePath || f.name, get: async () => f }))
+    });
+    folderInput.oncancel = () => res(null);
+    folderInput.click();
+  });
+}
+
+async function entriesFrom(choice) {
+  if (choice.handle) return walkHandle(choice.handle);
+  return choice.entries;
+}
+
+// ---------- Loading the model ----------
+async function loadFromChoice(choice) {
+  setBusy(true); showWarn(''); recBtn.disabled = true;
+  try {
+    statusEl.textContent = 'Reading the model folder…';
+    const files = chooseModelFiles(await entriesFrom(choice));
+    if (!files) {
+      statusEl.textContent = 'No model found in that folder.';
+      showWarn('That folder has no Whisper model in it. If this is your first time, open "First time? Download the model…" below and download it into a folder (for example in OneDrive).');
+      return false;
+    }
+
+    let modelId = modelSel.value;
+    if (files.has(MANIFEST)) {
+      try { modelId = JSON.parse(await (await files.get(MANIFEST).get()).text()).model || modelId; } catch (e) {}
+    }
+
+    const gpu = await hasWebGPU();
+    const has = v => VARIANTS[v].files.every(p => files.has(baseName(p)));
+    let variant;
+    if (gpu && has('gpu')) variant = 'gpu';
+    else if (has('cpu')) variant = 'cpu';
+    else if (has('gpu')) {
+      statusEl.textContent = 'Cannot run these model files here.';
+      showWarn('These model files need graphics acceleration (WebGPU), which this browser does not have. On your computer, download the model again with the "processor-only version" box ticked, then copy the folder across.');
+      return false;
+    } else {
+      statusEl.textContent = 'Model files are incomplete.';
+      showWarn('Some model files are missing from that folder. Try downloading the model again.');
+      return false;
+    }
+    if (variant === 'cpu' && modelId.includes('large')) {
+      showWarn('Running on the processor only (no graphics acceleration). The large model may be very slow here; the Small model may suit this device better.');
+    }
+
+    statusEl.textContent = 'Loading the speech library…';
+    const { pipeline, env } = await import(LIB);
+    // The library refuses to run with both sources off, so "local" is switched on but pointed at
+    // an empty location; every file is actually served from your folder by customCache below.
+    env.allowLocalModels = true;
+    env.localModelPath = '/__dictation_no_local__/';
+    env.allowRemoteModels = false;      // never fetch the model from the internet when loading
+    env.useBrowserCache = false;
+    env.useCustomCache = true;
+    env.customCache = {
+      async match(key) {
+        const url = typeof key === 'string' ? key : key.url;
+        const e = files.get(baseName(url.split('?')[0]));
+        if (!e) return undefined;
+        const f = await e.get();
+        return new Response(f, { headers: { 'content-length': String(f.size) } });
+      },
+      async put() {}
+    };
+
+    const loaded = {};
+    prog.style.display = 'block'; prog.value = 0;
+    transcriber = await pipeline('automatic-speech-recognition', modelId, {
+      device: VARIANTS[variant].device,
+      dtype: VARIANTS[variant].dtype,
+      progress_callback: p => {
+        if (p.status === 'progress' && p.total) {
+          loaded[p.file] = { l: p.loaded, t: p.total };
+          let l = 0, t = 0; for (const f of Object.values(loaded)) { l += f.l; t += f.t; }
+          prog.value = Math.round(l / t * 100);
+          statusEl.textContent = `Reading model from folder… ${prog.value}%`;
+        } else if (p.status === 'ready') statusEl.textContent = 'Preparing model…';
+      }
+    });
+
+    statusEl.textContent = 'Warming up…';
+    await transcriber(new Float32Array(16000), { language: 'english', task: 'transcribe' });
+
+    const name = modelId.split('/')[1];
+    statusEl.textContent = `Ready · ${name} · ${variant === 'gpu' ? 'graphics-accelerated' : 'processor only'}`;
+    recBtn.disabled = false;
+    if (choice.handle) await idbSet('folder', choice.handle);
+    return true;
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Could not load the model.';
+    showWarn('Error: ' + (err && err.message ? err.message : err) +
+      (/fetch|network|import/i.test(String(err && err.message)) ? '. The speech library loads from the internet; check your connection.' : '.'));
+    return false;
+  } finally {
+    prog.style.display = 'none';
+    setBusy(false);
+  }
+}
+
+loadBtn.addEventListener('click', async () => {
+  if (busy) return;
+  const saved = await idbGet('folder');
+  if (saved && saved.queryPermission) {
+    try {
+      let perm = await saved.queryPermission({ mode: 'read' });
+      if (perm !== 'granted') perm = await saved.requestPermission({ mode: 'read' });
+      if (perm === 'granted') { await loadFromChoice({ handle: saved }); return; }
+    } catch (e) { /* folder moved or permission refused: fall through to picking */ }
+  }
+  const choice = await pickFolder();
+  if (choice) await loadFromChoice(choice);
+});
+
+pickBtn.addEventListener('click', async () => {
+  if (busy) return;
+  const choice = await pickFolder();
+  if (choice) await loadFromChoice(choice);
+});
+
+// ---------- Downloading the model into a folder ----------
+async function writeFile(dir, path, writeFn) {
+  const parts = path.split('/');
+  for (const p of parts.slice(0, -1)) dir = await dir.getDirectoryHandle(p, { create: true });
+  const fh = await dir.getFileHandle(parts[parts.length - 1], { create: true });
+  const w = await fh.createWritable();
+  try { await writeFn(w); await w.close(); } catch (e) { try { await w.abort(); } catch (_) {} throw e; }
+}
+
+async function existingSize(dir, path) {
+  try {
+    const parts = path.split('/');
+    for (const p of parts.slice(0, -1)) dir = await dir.getDirectoryHandle(p);
+    return (await (await dir.getFileHandle(parts[parts.length - 1])).getFile()).size;
+  } catch (e) { return -1; }
+}
+
+dlBtn.addEventListener('click', async () => {
+  if (busy) return;
+  showWarn('');
+  const model = modelSel.value, short = model.split('/')[1];
+
+  // Work out the file list before asking for a folder
+  setBusy(true);
+  let list;
+  try {
+    statusEl.textContent = 'Checking which files to download…';
+    const info = await (await fetch(`${HF}/api/models/${model}?blobs=true`)).json();
+    const sizes = new Map(info.siblings.map(s => [s.rfilename, s.size || 0]));
+    const gpu = await hasWebGPU();
+    const variants = [];
+    if (gpu) variants.push('gpu');
+    if (!gpu || $('incCpu').checked) variants.push('cpu');
+    const needed = variants.flatMap(v => VARIANTS[v].files);
+    const missing = needed.filter(p => !sizes.has(p));
+    if (missing.length) throw new Error('This model does not offer the files needed: ' + missing.join(', '));
+    list = [...sizes.keys()].filter(n =>
+      (!n.includes('/') && /\.(json|txt)$/.test(n)) ||
+      needed.some(p => n.startsWith(p))                    // includes any matching .onnx_data part
+    ).map(n => ({ path: n, size: sizes.get(n) }));
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Could not get the model file list.';
+    showWarn('Error: ' + (err && err.message ? err.message : err) + '. This step needs an internet connection.');
+    setBusy(false);
+    return;
+  }
+  setBusy(false);
+
+  const total = list.reduce((a, f) => a + f.size, 0);
+  if (!confirm(`Download ${short} (${gb(total)}) into a folder you choose?\n\nA subfolder called "${short}" will be created inside it.`)) {
+    statusEl.textContent = 'Download cancelled.';
+    return;
+  }
+
+  // Preferred: write straight into a folder (Chrome / Edge on a computer)
+  if (window.showDirectoryPicker) {
+    let parent;
+    try { parent = await window.showDirectoryPicker({ id: 'dictation-models', mode: 'readwrite' }); }
+    catch (e) { statusEl.textContent = 'Download cancelled.'; return; }
+
+    setBusy(true);
+    prog.style.display = 'block'; prog.value = 0;
+    try {
+      const dir = await parent.getDirectoryHandle(short, { create: true });
+      let done = 0;
+      for (const f of list) {
+        if (await existingSize(dir, f.path) === f.size && f.size > 0) { done += f.size; continue; }  // already there
+        const res = await fetch(`${HF}/${model}/resolve/main/${f.path}`);
+        if (!res.ok) throw new Error(`${f.path}: HTTP ${res.status}`);
+        await writeFile(dir, f.path, async w => {
+          const reader = res.body.getReader();
+          for (;;) {
+            const { done: end, value } = await reader.read();
+            if (end) break;
+            await w.write(value);
+            done += value.length;
+            prog.value = Math.round(done / total * 100);
+            statusEl.textContent = `Downloading ${baseName(f.path)}… ${prog.value}% of ${gb(total)}`;
+          }
+        });
+      }
+      await writeFile(dir, MANIFEST, w => w.write(JSON.stringify(
+        { model, files: list.map(f => f.path), saved: new Date().toISOString() }, null, 2)));
+      statusEl.textContent = `Saved to the "${short}" folder. Loading it now…`;
+      prog.style.display = 'none';
+      setBusy(false);
+      $('dlBox').open = false;
+      await loadFromChoice({ handle: dir });
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = 'Download stopped.';
+      showWarn('Error: ' + (err && err.message ? err.message : err) +
+        '. Click the download button again and choose the same folder; finished files are skipped.');
+      prog.style.display = 'none';
+      setBusy(false);
+    }
+    return;
+  }
+
+  // Fallback: save each file to the Downloads folder
+  setBusy(true);
+  prog.style.display = 'block'; prog.value = 0;
+  try {
+    let done = 0;
+    const saveBlob = (blob, name) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    };
+    for (const f of list) {
+      statusEl.textContent = `Downloading ${baseName(f.path)}… ${prog.value}% of ${gb(total)}`;
+      const blob = await (await fetch(`${HF}/${model}/resolve/main/${f.path}`)).blob();
+      done += f.size; prog.value = Math.round(done / total * 100);
+      saveBlob(blob, baseName(f.path));
+    }
+    saveBlob(new Blob([JSON.stringify({ model, files: list.map(f => f.path) }, null, 2)]), MANIFEST);
+    statusEl.textContent = 'Files saved to Downloads.';
+    showWarn(`This browser can't write to a folder directly, so the files went to your Downloads. Move all ${list.length + 1} of them into one folder, then use "Choose model folder…". If the browser asks to allow multiple downloads, say yes.`);
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Download stopped.';
+    showWarn('Error: ' + (err && err.message ? err.message : err));
+  } finally {
+    prog.style.display = 'none';
+    setBusy(false);
+  }
+});
+
+// Show whether a folder is remembered
+idbGet('folder').then(h => {
+  if (h && h.name) statusEl.textContent = `Model not loaded yet. Remembered folder: "${h.name}" – click Load model.`;
+});
+
+// ---------- Recording ----------
+let mediaRecorder = null, chunks = [], stream = null, timer = null, startTime = 0;
+
+async function startRec() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
+    });
+  } catch (e) {
+    recStatus.textContent = 'Microphone access was refused or unavailable.';
+    return;
+  }
+  chunks = [];
+  mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  mediaRecorder.onstop = transcribe;
+  mediaRecorder.start();
+  startTime = Date.now();
+  recBtn.classList.add('recording');
+  recBtn.textContent = '⏹ Stop and transcribe';
+  timer = setInterval(() => {
+    const s = Math.floor((Date.now() - startTime) / 1000);
+    recStatus.textContent = `Recording… ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }, 250);
+}
+
+function stopRec() {
+  clearInterval(timer);
+  recBtn.classList.remove('recording');
+  recBtn.textContent = '🎙 Start dictating';
+  recBtn.disabled = true;
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+}
+
+recBtn.addEventListener('click', () => {
+  if (mediaRecorder && mediaRecorder.state === 'recording') stopRec(); else startRec();
+});
+
+function fmtDur(sec) {
+  const s = Math.round(sec);
+  return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${s % 60} s`;
+}
+
+// Turn spoken commands into formatting, then tidy spacing and capitals
+function applyVoiceCommands(t) {
+  const QUOTE = '(?:quotes?|quotation(?:[\\s-]?marks?)?)';
+  const BRACKET = '(?:brackets?|parenthes[ie]s)';
+  // Breaks
+  t = t.replace(/[,;:]?\s*\b(?:new|next)[\s-]?paragraphs?\b[,.;:!?]?\s*/gi, '\n\n');
+  t = t.replace(/[,;:]?\s*\b(?:new|next)[\s-]?lines?\b[,.;:!?]?\s*/gi, '\n');
+  // Bullets: "bullet point(s)", "next bullet", "new bullet"
+  t = t.replace(/[,;:]?\s*\b(?:bullet[\s-]?points?|(?:new|next)[\s-]?bullets?)\b[,.;:!?]?\s*/gi, '\n• ');
+  // Quotes: "open/begin/start quote" … "close/end quote"
+  t = t.replace(new RegExp(`\\s*\\b(?:open|begin|start)[\\s-]?${QUOTE}\\b[,.;:!?]?\\s*`, 'gi'), ' "');
+  t = t.replace(new RegExp(`[,;:.]?\\s*\\b(?:close|end)[\\s-]?${QUOTE}\\b`, 'gi'), '"');
+  // Brackets: "open/left bracket" … "close/right bracket"
+  t = t.replace(new RegExp(`\\s*\\b(?:open|left)[\\s-]?${BRACKET}\\b[,.;:!?]?\\s*`, 'gi'), ' (');
+  t = t.replace(new RegExp(`[,;:.]?\\s*\\b(?:close|right)[\\s-]?${BRACKET}\\b`, 'gi'), ')');
+  // Tidy
+  t = t.replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+(?!•)/g, '\n').replace(/ {2,}/g, ' ');
+  t = t.replace(/\n{3,}/g, '\n\n').replace(/^\s+|\s+$/g, '');
+  return t.replace(/(^|\n)(• )?([a-z])/g, (m, a, b, c) => a + (b || '') + c.toUpperCase());
+}
+
+// Remember the paragraph option (convenience only)
+try { $('paraEach').checked = localStorage.getItem('dictation-para') === '1'; } catch (e) {}
+$('paraEach').addEventListener('change', e => {
+  try { localStorage.setItem('dictation-para', e.target.checked ? '1' : '0'); } catch (_) {}
+});
+
+async function transcribe() {
+  recStatus.textContent = 'Transcribing…';
+  try {
+    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+    const buf = await blob.arrayBuffer();
+    const ctx = new AudioContext({ sampleRate: 16000 });
+    const audio = await ctx.decodeAudioData(buf);
+    ctx.close();
+    const samples = audio.getChannelData(0);
+    const t0 = performance.now();
+    const result = await transcriber(samples, {
+      language: 'english', task: 'transcribe',
+      chunk_length_s: 30, stride_length_s: 5
+    });
+    const text = applyVoiceCommands((result.text || '').trim());
+    if (text) {
+      const sep = $('paraEach').checked ? '\n\n' : (text.startsWith('•') ? '\n' : ' ');
+      out.value = out.value.trim() ? out.value.replace(/\s+$/, '') + sep + text : text;
+      out.scrollTop = out.scrollHeight;
+    }
+    recStatus.textContent = `${fmtDur(audio.duration)} of speech, processed in ${((performance.now() - t0) / 1000).toFixed(1)} s.`;
+  } catch (err) {
+    console.error(err);
+    recStatus.textContent = 'Transcription failed: ' + (err && err.message ? err.message : err);
+  } finally {
+    recBtn.disabled = false;
+  }
+}
+
+// ---------- Text tools ----------
+$('copyBtn').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(out.value); recStatus.textContent = 'Copied.'; }
+  catch (e) { out.select(); document.execCommand('copy'); recStatus.textContent = 'Copied.'; }
+});
+
+$('saveBtn').addEventListener('click', () => {
+  if (!out.value.trim()) { recStatus.textContent = 'Nothing to save yet.'; return; }
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  const name = `Dictation ${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ${p(d.getHours())}${p(d.getMinutes())}.txt`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out.value], { type: 'text/plain' }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  recStatus.textContent = `Saved as "${name}" to your Downloads.`;
+});
+
+$('clearBtn').addEventListener('click', () => {
+  if (!out.value || confirm('Clear all text?')) { out.value = ''; recStatus.textContent = ''; }
+});
+</script>
+</body>
+</html>
