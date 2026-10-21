@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f6f5e">
+<title>Private Dictation</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+    --border: #dcdad4; --accent: #2f6f5e; --accent-text: #ffffff;
+    --rec: #c0392b; --warn-bg: #fff4d6; --warn-text: #6a4b00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161617; --card: #222224; --text: #ececec; --muted: #a0a0a6;
+      --border: #3a3a3e; --accent: #4fae93; --accent-text: #0d1f1a;
+      --rec: #e0564a; --warn-bg: #3b3218; --warn-text: #f2d48a;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main {
+    max-width: 640px; margin: 0 auto;
+    padding: max(14px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 12px; min-height: 100dvh;
+  }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  h1 { font-size: 1.2rem; margin: 0; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  select, button {
+    font: inherit; border-radius: 10px; border: 1px solid var(--border);
+    padding: 10px 14px; background: var(--card); color: var(--text); min-height: 44px;
+  }
+  button { cursor: pointer; }
+  button:disabled { opacity: .45; }
+  .primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .iconbtn { padding: 8px 12px; font-size: .9rem; }
+  #recBtn {
+    width: 100%; min-height: 84px; font-size: 1.25rem; font-weight: 650;
+    background: var(--accent); color: var(--accent-text); border-color: var(--accent); border-radius: 16px;
+  }
+  #recBtn.recording { background: var(--rec); border-color: var(--rec); color: #fff; }
+  textarea {
+    width: 100%; flex: 1; min-height: 38vh; resize: vertical; font: inherit;
+    padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text);
+  }
+  .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .tools button { padding: 10px 4px; font-size: .92rem; }
+  .status { font-size: .88rem; color: var(--muted); min-height: 1.3em; margin-top: 8px; }
+  progress { width: 100%; height: 8px; margin-top: 8px; display: none; }
+  .warn { background: var(--warn-bg); color: var(--warn-text); border-radius: 10px; padding: 10px 12px; font-size: .88rem; margin-top: 8px; display: none; }
+  label { font-size: .88rem; color: var(--muted); }
+  .check { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; font-size: .9rem; color: var(--text); }
+  .check input { width: 20px; height: 20px; margin-top: 2px; }
+  #settings { display: none; }
+  #settings.open { display: block; }
+  .cmds { font-size: .86rem; color: var(--muted); line-height: 1.6; margin-top: 10px; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 12px 0; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Private Dictation</h1>
+    <button class="iconbtn" id="settingsBtn" aria-expanded="false">⚙ Settings</button>
+  </header>
+
+  <section class="card" id="settings">
+    <label for="modelSel">Model</label>
+    <div class="row" style="margin-top:4px">
+      <select id="modelSel" style="flex:1 1 200px">
+        <option value="onnx-community/whisper-small">Small – good balance for phones</option>
+        <option value="onnx-community/whisper-base">Base – fastest, least accurate</option>
+        <option value="onnx-community/whisper-large-v3-turbo">Large v3 Turbo – most accurate, may be too heavy</option>
+      </select>
+      <button id="loadBtn" class="primary">Load</button>
+    </div>
+    <label class="check">
+      <input type="checkbox" id="paraEach">
+      <span>Start each recording on a new paragraph</span>
+    </label>
+    <div class="cmds">
+      <strong>Spoken commands</strong><br>
+      "new paragraph" / "next paragraph" – paragraph break<br>
+      "new line" / "next line" – line break<br>
+      "bullet point" / "next bullet" – bulleted line (•)<br>
+      "open quote" … "close quote" – quotation marks<br>
+      "open bracket" … "close bracket" – brackets<br>
+      Plurals work too.
+    </div>
+    <hr>
+    <div class="status" id="storageInfo" style="margin-top:0"></div>
+    <button id="wipeBtn" class="iconbtn" style="margin-top:8px">Delete downloaded models</button>
+  </section>
+
+  <section class="card">
+    <button id="recBtn" disabled>🎙 Tap to dictate</button>
+    <progress id="prog" max="100" value="0"></progress>
+    <div class="status" id="status">Starting…</div>
+    <div class="warn" id="warn"></div>
+  </section>
+
+  <textarea id="out" placeholder="Your dictated text appears here. You can edit it before copying."></textarea>
+
+  <div class="tools">
+    <button id="copyBtn">Copy</button>
+    <button id="shareBtn">Share</button>
+    <button id="saveBtn">Save</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+</main>
+
+<script type="module">
+const LIB = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
+const VARIANTS = {
+  gpu: { device: 'webgpu', dtype: { encoder_model: 'fp16', decoder_model_merged: 'q4' } },
+  cpu: { device: 'wasm', dtype: 'q8' }
+};
+
+const $ = id => document.getElementById(id);
+const statusEl = $('status'), prog = $('prog'), warn = $('warn'), out = $('out');
+const recBtn = $('recBtn'), loadBtn = $('loadBtn'), modelSel = $('modelSel');
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+
+function showWarn(m) { warn.textContent = m || ''; warn.style.display = m ? 'block' : 'none'; }
+const shortName = id => id.split('/')[1];
+
+// Offline support / home-screen app
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// Settings panel
+$('settingsBtn').addEventListener('click', () => {
+  const open = $('settings').classList.toggle('open');
+  $('settingsBtn').setAttribute('aria-expanded', open);
+  if (open) showStorage();
+});
+
+// Remembered options and the text in progress (kept on this phone only)
+const savedModel = store.get('m-dictation-model');
+if (savedModel) modelSel.value = savedModel;
+$('paraEach').checked = store.get('m-dictation-para') === '1';
+$('paraEach').addEventListener('change', e => store.set('m-dictation-para', e.target.checked ? '1' : '0'));
+out.value = store.get('m-dictation-draft') || '';
+out.addEventListener('input', () => store.set('m-dictation-draft', out.value));
+const saveDraft = () => store.set('m-dictation-draft', out.value);
+
+async function showStorage() {
+  try {
+    const { usage, quota } = await navigator.storage.estimate();
+    const persisted = navigator.storage.persisted ? await navigator.storage.persisted() : false;
+    $('storageInfo').textContent =
+      `Stored on this phone: ${(usage / 1e9).toFixed(2)} GB (of ${(quota / 1e9).toFixed(0)} GB allowed). ` +
+      (persisted ? 'Kept permanently.' : 'The browser may clear it if the phone runs low on space.');
+  } catch (e) { $('storageInfo').textContent = ''; }
+}
+
+$('wipeBtn').addEventListener('click', async () => {
+  if (!confirm('Delete all downloaded models from this phone? You can download them again later.')) return;
+  try { await caches.delete('transformers-cache'); } catch (e) {}
+  store.set('m-dictation-loaded', '');
+  showStorage();
+  statusEl.textContent = 'Models deleted. Choose a model and tap Load to download again.';
+  transcriber = null; recBtn.disabled = true;
+});
+
+// ---------- Model ----------
+let transcriber = null, loading = false;
+
+async function hasWebGPU() {
+  try { return !!(navigator.gpu && await navigator.gpu.requestAdapter()); } catch (e) { return false; }
+}
+
+async function loadModel() {
+  if (loading) return;
+  loading = true; loadBtn.disabled = true; recBtn.disabled = true; showWarn('');
+  const model = modelSel.value;
+  store.set('m-dictation-model', model);
+  try {
+    statusEl.textContent = 'Loading the speech library…';
+    const { pipeline, env } = await import(LIB);
+    env.allowLocalModels = false;
+    env.allowRemoteModels = true;
+    env.useBrowserCache = true;
+
+    // Ask the browser to keep the model even when space is low (it may say no)
+    try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
+
+    const loaded = {};
+    const progress_callback = p => {
+      if (p.status === 'progress' && p.total) {
+        loaded[p.file] = { l: p.loaded, t: p.total };
+        let l = 0, t = 0; for (const f of Object.values(loaded)) { l += f.l; t += f.t; }
+        prog.style.display = 'block';
+        prog.value = Math.round(l / t * 100);
+        statusEl.textContent = `Getting ${shortName(model)}… ${prog.value}% of ${(t / 1e6).toFixed(0)} MB (first time only)`;
+      } else if (p.status === 'ready') statusEl.textContent = 'Preparing model…';
+    };
+
+    const order = (await hasWebGPU()) ? ['gpu', 'cpu'] : ['cpu'];
+    let used = null, lastErr = null;
+    for (const v of order) {
+      try {
+        transcriber = await pipeline('automatic-speech-recognition', model,
+          { device: VARIANTS[v].device, dtype: VARIANTS[v].dtype, progress_callback });
+        used = v; break;
+      } catch (err) { console.warn(v, err); lastErr = err; }
+    }
+    if (!used) throw lastErr;
+
+    statusEl.textContent = 'Warming up…';
+    await transcriber(new Float32Array(16000), { language: 'english', task: 'transcribe' });
+
+    store.set('m-dictation-loaded', model);
+    statusEl.textContent = `Ready · ${shortName(model)} · ${used === 'gpu' ? 'graphics-accelerated' : 'processor only'}`;
+    if (used === 'cpu' && model.includes('large')) {
+      showWarn('This phone is running the Large model without graphics acceleration, so it will likely be very slow. Small is recommended here.');
+    }
+    recBtn.disabled = false;
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Could not load the model.';
+    const msg = String(err && err.message ? err.message : err);
+    showWarn('Error: ' + msg + (/memory|alloc|abort/i.test(msg)
+      ? '. The phone may not have enough memory for this model; try a smaller one.'
+      : '. The first download needs an internet connection.'));
+  } finally {
+    prog.style.display = 'none';
+    loading = false; loadBtn.disabled = false;
+  }
+}
+loadBtn.addEventListener('click', () => { $('settings').classList.remove('open'); loadModel(); });
+
+// Load automatically if a model was used before (it comes from the phone's storage, no download)
+if (store.get('m-dictation-loaded') === modelSel.value) loadModel();
+else statusEl.textContent = `Open ⚙ Settings, choose a model and tap Load. The first download needs Wi-Fi or data.`;
+
+// ---------- Recording ----------
+let mediaRecorder = null, chunks = [], stream = null, timer = null, startTime = 0, wakeLock = null;
+
+async function keepAwake(on) {
+  try {
+    if (on && 'wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+    else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) {}
+}
+
+async function startRec() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
+    });
+  } catch (e) {
+    statusEl.textContent = 'Microphone access was refused or unavailable.';
+    return;
+  }
+  chunks = [];
+  mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  mediaRecorder.onstop = transcribe;
+  mediaRecorder.start();
+  keepAwake(true);
+  startTime = Date.now();
+  recBtn.classList.add('recording');
+  recBtn.textContent = '⏹ Tap to stop';
+  timer = setInterval(() => {
+    const s = Math.floor((Date.now() - startTime) / 1000);
+    statusEl.textContent = `Recording… ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }, 250);
+}
+
+function stopRec() {
+  clearInterval(timer);
+  recBtn.classList.remove('recording');
+  recBtn.textContent = '🎙 Tap to dictate';
+  recBtn.disabled = true;
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+}
+
+recBtn.addEventListener('click', () => {
+  if (mediaRecorder && mediaRecorder.state === 'recording') stopRec(); else startRec();
+});
+
+function fmtDur(sec) {
+  const s = Math.round(sec);
+  return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${s % 60} s`;
+}
+
+// Turn spoken commands into formatting, then tidy spacing and capitals
+function applyVoiceCommands(t) {
+  const QUOTE = '(?:quotes?|quotation(?:[\\s-]?marks?)?)';
+  const BRACKET = '(?:brackets?|parenthes[ie]s)';
+  t = t.replace(/[,;:]?\s*\b(?:new|next)[\s-]?paragraphs?\b[,.;:!?]?\s*/gi, '\n\n');
+  t = t.replace(/[,;:]?\s*\b(?:new|next)[\s-]?lines?\b[,.;:!?]?\s*/gi, '\n');
+  t = t.replace(/[,;:]?\s*\b(?:bullet[\s-]?points?|(?:new|next)[\s-]?bullets?)\b[,.;:!?]?\s*/gi, '\n• ');
+  t = t.replace(new RegExp(`\\s*\\b(?:open|begin|start)[\\s-]?${QUOTE}\\b[,.;:!?]?\\s*`, 'gi'), ' "');
+  t = t.replace(new RegExp(`[,;:.]?\\s*\\b(?:close|end)[\\s-]?${QUOTE}\\b`, 'gi'), '"');
+  t = t.replace(new RegExp(`[,;:]?\\s*\\b(?:open|left)[\\s-]?${BRACKET}\\b[,.;:!?]?\\s*`, 'gi'), ' (');
+  t = t.replace(new RegExp(`[,;:.]?\\s*\\b(?:close|right)[\\s-]?${BRACKET}\\b[,;:]?`, 'gi'), ')');
+  t = t.replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+(?!•)/g, '\n').replace(/ {2,}/g, ' ');
+  t = t.replace(/\n{3,}/g, '\n\n').replace(/^\s+|\s+$/g, '');
+  return t.replace(/(^|\n)(• )?([a-z])/g, (m, a, b, c) => a + (b || '') + c.toUpperCase());
+}
+
+async function transcribe() {
+  keepAwake(false);
+  statusEl.textContent = 'Transcribing…';
+  try {
+    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+    const ctx = new AudioContext({ sampleRate: 16000 });
+    const audio = await ctx.decodeAudioData(await blob.arrayBuffer());
+    ctx.close();
+    const t0 = performance.now();
+    const result = await transcriber(audio.getChannelData(0), {
+      language: 'english', task: 'transcribe', chunk_length_s: 30, stride_length_s: 5
+    });
+    const text = applyVoiceCommands((result.text || '').trim());
+    if (text) {
+      const sep = $('paraEach').checked ? '\n\n' : (text.startsWith('•') ? '\n' : ' ');
+      out.value = out.value.trim() ? out.value.replace(/\s+$/, '') + sep + text : text;
+      out.scrollTop = out.scrollHeight;
+      saveDraft();
+    }
+    statusEl.textContent = `${fmtDur(audio.duration)} of speech, processed in ${((performance.now() - t0) / 1000).toFixed(1)} s.`;
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Transcription failed: ' + (err && err.message ? err.message : err);
+  } finally {
+    recBtn.disabled = false;
+  }
+}
+
+// ---------- Text tools ----------
+$('copyBtn').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(out.value); statusEl.textContent = 'Copied.'; }
+  catch (e) { out.select(); document.execCommand('copy'); statusEl.textContent = 'Copied.'; }
+});
+
+$('shareBtn').addEventListener('click', async () => {
+  if (!out.value.trim()) { statusEl.textContent = 'Nothing to share yet.'; return; }
+  if (navigator.share) {
+    try { await navigator.share({ text: out.value }); } catch (e) { /* share sheet closed */ }
+  } else {
+    statusEl.textContent = 'Sharing is not available in this browser; use Copy instead.';
+  }
+});
+
+$('saveBtn').addEventListener('click', () => {
+  if (!out.value.trim()) { statusEl.textContent = 'Nothing to save yet.'; return; }
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  const name = `Dictation ${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ${p(d.getHours())}${p(d.getMinutes())}.txt`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out.value], { type: 'text/plain' }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  statusEl.textContent = `Saved as "${name}" to your Downloads.`;
+});
+
+$('clearBtn').addEventListener('click', () => {
+  if (!out.value || confirm('Clear all text?')) { out.value = ''; saveDraft(); }
+});
+</script>
+</body>
+</html>
